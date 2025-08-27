@@ -133,7 +133,7 @@ async function onSubmit() {
   width: 100%;
   border-radius: 24px;
   box-shadow: 0 8px 32px rgba(44, 62, 80, 0.12);
-  background: #f9c784;
+  background: #ffb74d;
   padding: 32px 24px;
 }
 

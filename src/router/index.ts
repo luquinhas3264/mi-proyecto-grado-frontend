@@ -8,23 +8,38 @@ interface CustomRouteMeta {
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
+    redirect: '/login',
+  },
+  {
+    path: '/login',
     name: 'Login',
     component: () => import('../modules/auth/pages/LoginPage.vue'),
   },
+
+  // Rutas protegidas con layout
   {
-    path: '/perfil',
-    name: 'Perfil',
-    component: () => import('../modules/auth/pages/ProfilePage.vue'),
+    path: '/',
+    component: () => import('../layouts/MainLayout.vue'),
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('../modules/dashboard/pages/DashboardPage.vue'),
+      },
+      {
+        path: 'perfil',
+        name: 'Perfil',
+        component: () => import('../modules/auth/pages/ProfilePage.vue'),
+      },
+    ],
   },
 
-  // Ejemplo de ruta protegida por permiso:
-  // {
-  //   path: '/usuarios',
-  //   name: 'Usuarios',
-  //   component: () => import('../modules/usuarios/pages/UsuariosPage.vue'),
-  //   meta: { requiredPermission: { modulo: 'usuarios', accion: 'ver' } }
-  // },
-  // ...otras rutas
+  // Página 404
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('../components/NotFoundPage.vue'),
+  },
 ]
 
 const router = createRouter({
@@ -39,18 +54,28 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('auth_token')
   const user = JSON.parse(localStorage.getItem('auth_user') || 'null')
 
+  // Redirect to dashboard if logged in and trying to access login
+  if (to.path === '/login' && token) {
+    return next('/dashboard')
+  }
+
+  // Require auth for protected routes
   if (authRequired && !token) {
     return next('/login')
   }
 
+  // Check permissions for routes that require them
   const meta = to.meta as CustomRouteMeta
-  if (meta.requiredPermission) {
+  if (meta.requiredPermission && user) {
     const hasPermission = (user?.permisos as Permission[] | undefined)?.some(
       (p: Permission) =>
         p.modulo === meta.requiredPermission!.modulo &&
         p.accion === meta.requiredPermission!.accion,
     )
-    if (!hasPermission) return next('/perfil')
+    if (!hasPermission) {
+      // Redirect to dashboard instead of profile for better UX
+      return next('/dashboard')
+    }
   }
 
   next()

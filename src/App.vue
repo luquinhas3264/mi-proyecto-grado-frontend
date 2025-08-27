@@ -3,17 +3,9 @@ import { RouterView } from 'vue-router'
 </script>
 
 <template>
-  <main>
-    <RouterView />
-  </main>
+  <RouterView />
 </template>
 
 <style scoped>
-main {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f6fa;
-}
+/* Los estilos globales se mantienen en base.css */
 </style>
