@@ -1,1 +1,28 @@
 @import './base.css';
+
+/* Clases utilitarias para el módulo usuarios */
+.usuarios-container {
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.stats-card {
+  transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-2px);
+}
+
+.font-mono {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+}
+
+/* Mejoras para los dialogs */
+.v-dialog .v-card {
+  border-radius: 16px !important;
+}
+
+.v-dialog .v-card-title {
+  font-weight: 600 !important;
+}

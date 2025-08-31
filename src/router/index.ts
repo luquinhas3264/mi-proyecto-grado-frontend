@@ -27,9 +27,34 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('../modules/dashboard/pages/DashboardPage.vue'),
       },
       {
-        path: 'perfil',
-        name: 'Perfil',
-        component: () => import('../modules/auth/pages/ProfilePage.vue'),
+        path: 'usuarios',
+        name: 'Usuarios',
+        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'usuarios', accion: 'ver' },
+        },
+      },
+      {
+        path: 'usuarios/nuevo',
+        name: 'CrearUsuario',
+        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'), // Usa el mismo componente con dialog
+        meta: {
+          requiredPermission: { modulo: 'usuarios', accion: 'crear' },
+        },
+      },
+      {
+        path: 'usuarios/:id',
+        name: 'DetalleUsuario',
+        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'), // Usa el mismo componente con dialog
+        meta: {
+          requiredPermission: { modulo: 'usuarios', accion: 'ver' },
+        },
+      },
+      {
+        path: 'mi-perfil',
+        name: 'MiPerfil',
+        component: () => import('../modules/usuarios-internos/pages/MiPerfilPage.vue'),
+        // No requiere permisos especiales, solo estar autenticado
       },
     ],
   },

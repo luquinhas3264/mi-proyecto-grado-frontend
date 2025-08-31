@@ -228,7 +228,7 @@ function hasPermission(modulo: string, accion: string): boolean {
 }
 
 function goToProfile() {
-  router.push('/perfil')
+  router.push('/mi-perfil')
 }
 
 function logout() {
