@@ -26,6 +26,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Dashboard',
         component: () => import('../modules/dashboard/pages/DashboardPage.vue'),
       },
+
+      // Rutas de Usuarios
       {
         path: 'usuarios',
         name: 'Usuarios',
@@ -50,6 +52,42 @@ const routes: Array<RouteRecordRaw> = [
           requiredPermission: { modulo: 'usuarios', accion: 'ver' },
         },
       },
+
+      // Rutas de Roles
+      {
+        path: 'roles',
+        name: 'Roles',
+        component: () => import('../modules/roles/pages/RolesListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'roles', accion: 'ver' },
+        },
+      },
+      {
+        path: 'roles/nuevo',
+        name: 'CrearRol',
+        component: () => import('../modules/roles/pages/RolesListPage.vue'), // Usa el mismo componente con dialog
+        meta: {
+          requiredPermission: { modulo: 'roles', accion: 'crear' },
+        },
+      },
+      {
+        path: 'roles/:id',
+        name: 'DetalleRol',
+        component: () => import('../modules/roles/pages/RolesListPage.vue'), // Usa el mismo componente con dialog
+        meta: {
+          requiredPermission: { modulo: 'roles', accion: 'ver' },
+        },
+      },
+      {
+        path: 'roles/:id/permisos',
+        name: 'GestionarPermisosRol',
+        component: () => import('../modules/roles/pages/RolesListPage.vue'), // Usa el mismo componente con dialog de permisos
+        meta: {
+          requiredPermission: { modulo: 'roles', accion: 'editar' },
+        },
+      },
+
+      // Perfil de Usuario
       {
         path: 'mi-perfil',
         name: 'MiPerfil',
