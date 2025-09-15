@@ -337,6 +337,12 @@ const usuariosFiltrados = computed(() => {
     resultado = resultado.filter((u) => u.rol.nombre === filtroRol.value)
   }
 
+  // Ordenar: activos primero, luego inactivos
+  resultado = resultado.slice().sort((a, b) => {
+    if (a.activo === b.activo) return 0
+    return a.activo ? -1 : 1
+  })
+
   return resultado
 })
 

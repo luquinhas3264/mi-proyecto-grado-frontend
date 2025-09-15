@@ -59,7 +59,7 @@ export class UsuariosService {
     return response.data
   }
 
-  // Obtener roles disponibles (asumiendo que existe este endpoint)
+  // Obtener roles disponibles
   static async getRoles(): Promise<Array<{ idRol: string; nombre: string; descripcion: string }>> {
     try {
       const response = await axios.get('http://localhost:3000/roles', {

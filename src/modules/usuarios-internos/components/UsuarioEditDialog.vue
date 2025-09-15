@@ -148,6 +148,7 @@
         <v-spacer />
         <v-btn variant="outlined" @click="cancelar" :disabled="loading"> Cancelar </v-btn>
         <v-btn color="#485696" @click="onSubmit" :loading="loading" :disabled="!hayCambios">
+          <v-icon>mdi-content-save</v-icon>
           Guardar Cambios
         </v-btn>
       </v-card-actions>

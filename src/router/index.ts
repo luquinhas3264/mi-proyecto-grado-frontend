@@ -87,6 +87,44 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
 
+      // Rutas de Clientes Empresa
+      {
+        path: 'clientes',
+        name: 'ClientesEmpresa',
+        component: () =>
+          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'clientes', accion: 'ver' },
+        },
+      },
+      {
+        path: 'clientes/nuevo',
+        name: 'CrearClienteEmpresa',
+        component: () =>
+          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'clientes', accion: 'crear' },
+        },
+      },
+      {
+        path: 'clientes/:id',
+        name: 'DetalleClienteEmpresa',
+        component: () =>
+          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'clientes', accion: 'ver' },
+        },
+      },
+      {
+        path: 'clientes/:id/editar',
+        name: 'EditarClienteEmpresa',
+        component: () =>
+          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'clientes', accion: 'editar' },
+        },
+      },
+
       // Perfil de Usuario
       {
         path: 'mi-perfil',

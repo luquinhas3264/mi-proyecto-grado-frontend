@@ -7,7 +7,7 @@
   >
     <v-card>
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2" color="#485696">mdi-account-plus</v-icon>
+        <v-icon class="mr-2" color="white">mdi-account-plus</v-icon>
         Crear Nuevo Usuario
       </v-card-title>
 
@@ -117,6 +117,7 @@
         <v-spacer />
         <v-btn variant="outlined" @click="cancelar" :disabled="loading"> Cancelar </v-btn>
         <v-btn color="#485696" @click="onSubmit" :loading="loading" :disabled="!formValido">
+          <v-icon>mdi-account-plus</v-icon>
           Crear Usuario
         </v-btn>
       </v-card-actions>

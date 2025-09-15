@@ -64,7 +64,7 @@ export class RolesService {
     return response.data
   }
 
-  // Obtener todos los permisos disponibles (asumiendo que existe este endpoint)
+  // Obtener todos los permisos disponibles
   static async getPermisosDisponibles(): Promise<Permiso[]> {
     try {
       const response = await axios.get('http://localhost:3000/permisos', {
