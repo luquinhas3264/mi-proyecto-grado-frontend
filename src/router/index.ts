@@ -87,41 +87,37 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
 
-      // Rutas de Clientes Empresa
+      // Rutas de Clientes
       {
         path: 'clientes',
-        name: 'ClientesEmpresa',
-        component: () =>
-          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        name: 'Clientes',
+        component: () => import('../modules/clientes/pages/ClientesMainPage.vue'),
         meta: {
           requiredPermission: { modulo: 'clientes', accion: 'ver' },
         },
       },
       {
-        path: 'clientes/nuevo',
-        name: 'CrearClienteEmpresa',
-        component: () =>
-          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        path: 'clientes/contactos',
+        name: 'ClientesContactos',
+        component: () => import('../modules/clientes/pages/ClientesMainPage.vue'),
         meta: {
-          requiredPermission: { modulo: 'clientes', accion: 'crear' },
+          requiredPermission: { modulo: 'contactos', accion: 'ver' },
         },
       },
       {
-        path: 'clientes/:id',
-        name: 'DetalleClienteEmpresa',
-        component: () =>
-          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        path: 'clientes/etiquetas',
+        name: 'ClientesEtiquetas',
+        component: () => import('../modules/clientes/pages/ClientesMainPage.vue'),
         meta: {
-          requiredPermission: { modulo: 'clientes', accion: 'ver' },
+          requiredPermission: { modulo: 'etiquetas', accion: 'ver' },
         },
       },
       {
-        path: 'clientes/:id/editar',
-        name: 'EditarClienteEmpresa',
-        component: () =>
-          import('../modules/clientes/cliente-empresa/pages/ClienteEmpresaListPage.vue'),
+        path: 'clientes/interacciones',
+        name: 'ClientesInteracciones',
+        component: () => import('../modules/clientes/pages/ClientesMainPage.vue'),
         meta: {
-          requiredPermission: { modulo: 'clientes', accion: 'editar' },
+          requiredPermission: { modulo: 'interacciones', accion: 'ver' },
         },
       },
 

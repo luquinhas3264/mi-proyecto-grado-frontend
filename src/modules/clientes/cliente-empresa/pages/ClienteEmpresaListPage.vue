@@ -1,24 +1,5 @@
 <template>
-  <div class="clientes-container">
-    <!-- Header -->
-    <div class="page-header mb-6">
-      <div class="d-flex align-center justify-space-between">
-        <div>
-          <h1 class="text-h4 font-weight-bold mb-2">Gestión de Clientes Empresa</h1>
-          <p class="text-subtitle-1">Administra las empresas cliente del sistema</p>
-        </div>
-        <v-btn
-          v-if="hasPermission('clientes', 'crear')"
-          color="#485696"
-          size="large"
-          prepend-icon="mdi-plus"
-          @click="mostrarDialogoCrear = true"
-        >
-          Nueva Empresa Cliente
-        </v-btn>
-      </div>
-    </div>
-
+  <div class="clientes-empresa-container">
     <!-- Stats Cards -->
     <v-row class="mb-6">
       <v-col cols="12" sm="6" md="3">
@@ -156,7 +137,19 @@
         <v-icon class="mr-2" color="#485696">mdi-domain</v-icon>
         Lista de Clientes Empresa
         <v-spacer />
-        <v-chip color="primary" variant="tonal"> {{ clientesFiltrados.length }} clientes </v-chip>
+        <div class="d-flex align-center gap-2">
+          <v-chip color="primary" variant="tonal"> {{ clientesFiltrados.length }} clientes </v-chip>
+          <v-btn
+            v-if="hasPermission('clientes', 'crear')"
+            color="#485696"
+            variant="outlined"
+            size="small"
+            prepend-icon="mdi-plus"
+            @click="$emit('crear-cliente')"
+          >
+            Nuevo Cliente
+          </v-btn>
+        </div>
       </v-card-title>
 
       <v-data-table
@@ -249,7 +242,7 @@
                   size="small"
                   variant="text"
                   color="primary"
-                  @click="verCliente(item)"
+                  @click="$emit('ver-cliente', item)"
                 />
               </template>
             </v-tooltip>
@@ -263,7 +256,7 @@
                   size="small"
                   variant="text"
                   color="warning"
-                  @click="editarCliente(item)"
+                  @click="$emit('editar-cliente', item)"
                 />
               </template>
             </v-tooltip>
@@ -271,13 +264,17 @@
             <v-tooltip :text="item.activo ? 'Desactivar' : 'Activar'">
               <template v-slot:activator="{ props }">
                 <v-btn
-                  v-if="hasPermission('clientes', 'editar')"
+                  v-if="hasPermission('clientes', 'eliminar')"
                   v-bind="props"
                   :icon="item.activo ? 'mdi-domain-remove' : 'mdi-domain-plus'"
                   size="small"
                   variant="text"
                   :color="item.activo ? 'error' : 'success'"
-                  @click="item.activo ? confirmarEliminacion(item) : toggleEstado(item)"
+                  @click="
+                    item.activo
+                      ? $emit('confirmar-eliminacion', item)
+                      : $emit('toggle-estado', item)
+                  "
                 />
               </template>
             </v-tooltip>
@@ -285,82 +282,24 @@
         </template>
       </v-data-table>
     </v-card>
-
-    <!-- Dialogs -->
-    <ClienteEmpresaCreateDialog v-model="mostrarDialogoCrear" @cliente-creado="onClienteCreado" />
-
-    <ClienteEmpresaEditDialog
-      v-model="mostrarDialogoEditar"
-      :cliente="clienteSeleccionado"
-      @cliente-actualizado="onClienteActualizado"
-    />
-
-    <ClienteEmpresaViewDialog
-      v-model="mostrarDialogoVer"
-      :cliente="clienteSeleccionado"
-      @editar-cliente="editarCliente"
-      @toggle-estado="toggleEstado"
-    />
-
-    <!-- Dialog de confirmación de eliminación -->
-    <v-dialog v-model="mostrarConfirmacionEliminacion" max-width="500">
-      <v-card>
-        <v-card-title class="text-h6">
-          <v-icon class="mr-2" color="error">mdi-alert</v-icon>
-          Confirmar Eliminación
-        </v-card-title>
-        <v-card-text>
-          <p>
-            ¿Está seguro que desea eliminar el cliente
-            <strong>{{ clienteAEliminar?.razonSocial }}</strong
-            >?
-          </p>
-          <v-alert type="warning" variant="tonal" class="mt-3">
-            Esta acción desactivará el cliente. Los datos no se perderán pero el cliente ya no
-            estará disponible.
-          </v-alert>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn
-            variant="outlined"
-            @click="mostrarConfirmacionEliminacion = false"
-            :disabled="loading"
-          >
-            Cancelar
-          </v-btn>
-          <v-btn color="error" @click="eliminarCliente" :loading="loading">
-            Confirmar Eliminación
-          </v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-
-    <!-- Snackbar para mensajes -->
-    <v-snackbar
-      v-model="snackbar.show"
-      :color="snackbar.color"
-      :timeout="4000"
-      location="top right"
-    >
-      {{ snackbar.message }}
-      <template v-slot:actions>
-        <v-btn color="white" variant="text" @click="snackbar.show = false"> Cerrar </v-btn>
-      </template>
-    </v-snackbar>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useClienteEmpresaStore } from '../store/cliente-empresa.store'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
 import type { ClienteEmpresaListItem } from '../interfaces/cliente-empresa.interface'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
-import ClienteEmpresaCreateDialog from '../components/ClienteEmpresaCreateDialog.vue'
-import ClienteEmpresaEditDialog from '../components/ClienteEmpresaEditDialog.vue'
-import ClienteEmpresaViewDialog from '../components/ClienteEmpresaViewDialog.vue'
-import { watch } from 'vue'
+
+// Definir eventos que emite el componente
+const emit = defineEmits<{
+  'crear-cliente': []
+  'editar-cliente': [cliente: ClienteEmpresaListItem]
+  'ver-cliente': [cliente: ClienteEmpresaListItem]
+  'toggle-estado': [cliente: ClienteEmpresaListItem]
+  'confirmar-eliminacion': [cliente: ClienteEmpresaListItem]
+}>()
 
 const clienteEmpresaStore = useClienteEmpresaStore()
 const authStore = useAuthStore()
@@ -372,21 +311,6 @@ const filtroRubro = ref('')
 const filtroEtiqueta = ref('')
 const pagina = ref(1)
 const itemsPorPagina = ref(10)
-
-// Dialogs
-const mostrarDialogoCrear = ref(false)
-const mostrarDialogoEditar = ref(false)
-const mostrarDialogoVer = ref(false)
-const mostrarConfirmacionEliminacion = ref(false)
-const clienteSeleccionado = ref<ClienteEmpresaListItem | null>(null)
-const clienteAEliminar = ref<ClienteEmpresaListItem | null>(null)
-
-// Snackbar
-const snackbar = ref({
-  show: false,
-  message: '',
-  color: 'success',
-})
 
 // Computed
 const loading = computed(() => clienteEmpresaStore.loading)
@@ -402,13 +326,6 @@ const opcionesEstado = [
   { title: 'Activos', value: 'activo' },
   { title: 'Inactivos', value: 'inactivo' },
 ]
-
-const opcionesRubros = computed(() =>
-  [...new Set(clientes.value.map((c) => c.rubro))].map((rubro) => ({
-    title: rubro,
-    value: rubro,
-  })),
-)
 
 const etiquetasUnicas = computed(() => {
   const etiquetasMap = new Map<string, string>()
@@ -453,11 +370,6 @@ const clientesFiltrados = computed(() => {
     resultado = resultado.filter((c) => c.activo === estado)
   }
 
-  // Filtrar por rubro
-  if (filtroRubro.value) {
-    resultado = resultado.filter((c) => c.rubro === filtroRubro.value)
-  }
-
   // Ordenar: activos primero, luego inactivos
   resultado = resultado.slice().sort((a, b) => {
     if (a.activo === b.activo) return 0
@@ -467,6 +379,7 @@ const clientesFiltrados = computed(() => {
   return resultado
 })
 
+// Watchers
 watch(filtroEtiqueta, (nuevoValor) => {
   if (nuevoValor) {
     clienteEmpresaStore.cargarClientes({ etiquetaId: nuevoValor })
@@ -485,84 +398,11 @@ async function cargarClientes() {
   await clienteEmpresaStore.cargarClientes()
 }
 
-function verCliente(cliente: ClienteEmpresaListItem) {
-  clienteSeleccionado.value = cliente
-  mostrarDialogoVer.value = true
-}
-
-function editarCliente(cliente: ClienteEmpresaListItem) {
-  clienteSeleccionado.value = cliente
-  mostrarDialogoEditar.value = true
-}
-
-async function toggleEstado(cliente: ClienteEmpresaListItem) {
-  try {
-    // Cambiar el estado activo usando PATCH
-    const nuevoEstado = !cliente.activo
-    await clienteEmpresaStore.actualizarCliente(cliente.idCliente, { activo: nuevoEstado })
-    // Actualizar clienteSeleccionado si coincide
-    if (clienteSeleccionado.value?.idCliente === cliente.idCliente) {
-      const actualizado = clientes.value.find((c) => c.idCliente === cliente.idCliente)
-      if (actualizado) {
-        clienteSeleccionado.value = { ...actualizado }
-      }
-    }
-    mostrarMensaje(
-      `Cliente ${cliente.activo ? 'desactivado' : 'activado'} correctamente`,
-      'success',
-    )
-  } catch (error) {
-    mostrarMensaje('Error al cambiar el estado del cliente', 'error')
-  }
-}
-
-function confirmarEliminacion(cliente: ClienteEmpresaListItem) {
-  clienteAEliminar.value = cliente
-  mostrarConfirmacionEliminacion.value = true
-}
-
-async function eliminarCliente() {
-  if (!clienteAEliminar.value) return
-
-  try {
-    await clienteEmpresaStore.eliminarCliente(clienteAEliminar.value.idCliente)
-    mostrarConfirmacionEliminacion.value = false
-    clienteAEliminar.value = null
-    mostrarMensaje('Cliente eliminado correctamente', 'success')
-  } catch (error) {
-    mostrarMensaje('Error al eliminar el cliente', 'error')
-  }
-}
-
-function enviarCorreo(cliente: ClienteEmpresaListItem) {
-  window.open(`mailto:${cliente.correo}`)
-}
-
-function llamar(cliente: ClienteEmpresaListItem) {
-  window.open(`tel:${cliente.telefono}`)
-}
-
 function limpiarFiltros() {
   busqueda.value = ''
   filtroEstado.value = 'todos'
   filtroRubro.value = ''
   filtroEtiqueta.value = ''
-}
-
-function onClienteCreado() {
-  mostrarDialogoCrear.value = false
-  cargarClientes()
-  mostrarMensaje('Cliente creado correctamente', 'success')
-}
-
-function onClienteActualizado() {
-  mostrarDialogoEditar.value = false
-  cargarClientes()
-  mostrarMensaje('Cliente actualizado correctamente', 'success')
-}
-
-function mostrarMensaje(message: string, color: string) {
-  snackbar.value = { show: true, message, color }
 }
 
 // Inicialización
@@ -572,18 +412,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.clientes-container {
-  padding: 2rem;
-  background: #f8f9fa;
-  min-height: 100vh;
-}
-
-.page-header {
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #ffb74d 0%, #ebb768 100%);
-  color: #212121;
-  border-radius: 16px;
-  margin-bottom: 2rem;
+.clientes-empresa-container {
+  padding: 5px;
 }
 
 .stats-card {
@@ -604,9 +434,13 @@ onMounted(() => {
   gap: 0.25rem;
 }
 
+.gap-2 {
+  gap: 0.5rem;
+}
+
 @media (max-width: 960px) {
-  .clientes-container {
-    padding: 1rem;
+  .clientes-empresa-container {
+    padding: 0;
   }
 }
 </style>
