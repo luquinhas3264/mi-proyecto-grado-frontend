@@ -1,5 +1,5 @@
 <template>
-  <div class="clientes-empresa-container">
+  <div class="contactos-cliente-container">
     <!-- Stats Cards -->
     <v-row class="mb-6">
       <v-col cols="12" sm="6" md="3">
@@ -7,11 +7,11 @@
           <v-card-text>
             <div class="d-flex align-center">
               <v-avatar size="48" color="primary" class="mr-3">
-                <v-icon color="white">mdi-domain</v-icon>
+                <v-icon color="white">mdi-account-group</v-icon>
               </v-avatar>
               <div>
-                <div class="text-h5 font-weight-bold">{{ totalClientes }}</div>
-                <div class="text-caption text-grey-darken-1">Total Clientes</div>
+                <div class="text-h5 font-weight-bold">{{ totalContactos }}</div>
+                <div class="text-caption text-grey-darken-1">Total Contactos</div>
               </div>
             </div>
           </v-card-text>
@@ -26,7 +26,7 @@
                 <v-icon color="white">mdi-check-circle</v-icon>
               </v-avatar>
               <div>
-                <div class="text-h5 font-weight-bold">{{ clientesActivos.length }}</div>
+                <div class="text-h5 font-weight-bold">{{ contactosActivos.length }}</div>
                 <div class="text-caption text-grey-darken-1">Activos</div>
               </div>
             </div>
@@ -42,7 +42,7 @@
                 <v-icon color="white">mdi-pause-circle</v-icon>
               </v-avatar>
               <div>
-                <div class="text-h5 font-weight-bold">{{ clientesInactivos.length }}</div>
+                <div class="text-h5 font-weight-bold">{{ contactosInactivos.length }}</div>
                 <div class="text-caption text-grey-darken-1">Inactivos</div>
               </div>
             </div>
@@ -55,13 +55,13 @@
           <v-card-text>
             <div class="d-flex align-center">
               <v-avatar size="48" color="info" class="mr-3">
-                <v-icon color="white">mdi-tag-multiple</v-icon>
+                <v-icon color="white">mdi-briefcase</v-icon>
               </v-avatar>
               <div>
                 <div class="text-h5 font-weight-bold">
-                  {{ Object.keys(clientesPorRubro).length }}
+                  {{ Object.keys(contactosPorCargo).length }}
                 </div>
-                <div class="text-caption text-grey-darken-1">Rubros Únicos</div>
+                <div class="text-caption text-grey-darken-1">Cargos Únicos</div>
               </div>
             </div>
           </v-card-text>
@@ -76,7 +76,7 @@
           <v-col cols="12" md="4">
             <v-text-field
               v-model="busqueda"
-              label="Buscar clientes"
+              label="Buscar contactos"
               prepend-inner-icon="mdi-magnify"
               variant="outlined"
               density="compact"
@@ -97,10 +97,12 @@
           </v-col>
 
           <v-col cols="12" md="3">
-            <v-select
-              v-model="filtroEtiqueta"
-              label="Etiqueta"
-              :items="etiquetasUnicas"
+            <v-autocomplete
+              v-model="filtroCliente"
+              label="Cliente"
+              :items="clientesDisponibles"
+              item-title="razonSocial"
+              item-value="idCliente"
               variant="outlined"
               density="compact"
               clearable
@@ -121,7 +123,7 @@
                   v-bind="props"
                   icon="mdi-refresh"
                   variant="outlined"
-                  @click="cargarClientes"
+                  @click="cargarContactos"
                   :loading="loading"
                 />
               </template>
@@ -131,23 +133,25 @@
       </v-card-text>
     </v-card>
 
-    <!-- Tabla de Clientes -->
+    <!-- Tabla de Contactos -->
     <v-card elevation="3">
       <v-card-title class="d-flex align-center">
-        <v-icon class="mr-2" color="#485696">mdi-domain</v-icon>
-        Lista de Clientes Empresa
+        <v-icon class="mr-2" color="#485696">mdi-account-group</v-icon>
+        Lista de Contactos
         <v-spacer />
         <div class="d-flex align-center gap-2">
-          <v-chip color="primary" variant="tonal"> {{ clientesFiltrados.length }} clientes </v-chip>
+          <v-chip color="primary" variant="tonal">
+            {{ contactosFiltrados.length }} contactos
+          </v-chip>
           <v-btn
-            v-if="hasPermission('clientes', 'crear')"
+            v-if="hasPermission('contactos', 'crear')"
             color="#485696"
             variant="outlined"
             size="small"
             prepend-icon="mdi-plus"
-            @click="$emit('crear-cliente')"
+            @click="$emit('crear-contacto')"
           >
-            Nuevo Cliente
+            Nuevo Contacto
           </v-btn>
         </div>
       </v-card-title>
@@ -155,26 +159,37 @@
       <v-data-table
         v-model:page="pagina"
         :headers="headers"
-        :items="clientesFiltrados"
+        :items="contactosFiltrados"
         :loading="loading"
         :items-per-page="itemsPorPagina"
         class="elevation-0"
-        loading-text="Cargando clientes..."
-        no-data-text="No hay clientes disponibles"
+        loading-text="Cargando contactos..."
+        no-data-text="No hay contactos disponibles"
       >
-        <!-- Razón Social con avatar -->
-        <template v-slot:item.razonSocial="{ item }">
+        <!-- Nombre con avatar -->
+        <template v-slot:item.nombre="{ item }">
           <div class="d-flex align-center">
-            <v-avatar size="32" color="orange" class="mr-3">
+            <v-avatar size="32" color="#485696" class="mr-3">
               <span class="text-caption font-weight-bold">
-                {{ item.razonSocial.charAt(0).toUpperCase() }}
+                {{ item.nombre.charAt(0).toUpperCase() }}
               </span>
             </v-avatar>
             <div>
-              <div class="font-weight-medium">{{ item.razonSocial }}</div>
-              <div class="text-caption text-grey-darken-1">{{ item.rubro }}</div>
+              <div class="font-weight-medium">{{ item.nombre }}</div>
+              <div class="text-caption text-grey-darken-1">{{ item.cargo }}</div>
             </div>
           </div>
+        </template>
+
+        <!-- Cliente -->
+        <template v-slot:item.cliente="{ item }">
+          <div v-if="getClienteInfo(item.idCliente)">
+            <div class="font-weight-medium">{{ getClienteInfo(item.idCliente)?.razonSocial }}</div>
+            <div class="text-caption text-grey-darken-1">
+              {{ getClienteInfo(item.idCliente)?.rubro }}
+            </div>
+          </div>
+          <div v-else class="text-grey-darken-1">Cliente no encontrado</div>
         </template>
 
         <!-- Información de contacto -->
@@ -182,7 +197,7 @@
           <div>
             <div class="text-body-2">
               <v-icon size="14" class="mr-1">mdi-email</v-icon>
-              {{ item.correo }}
+              {{ item.email }}
             </div>
             <div class="text-body-2">
               <v-icon size="14" class="mr-1">mdi-phone</v-icon>
@@ -199,38 +214,6 @@
           </v-chip>
         </template>
 
-        <!-- Etiquetas -->
-        <template v-slot:item.etiquetas="{ item }">
-          <div class="d-flex flex-wrap gap-1">
-            <v-chip
-              v-for="etiquetaCliente in item.etiquetas.slice(0, 2)"
-              :key="etiquetaCliente.idEtiqueta"
-              color="orange"
-              variant="outlined"
-              size="x-small"
-            >
-              {{ etiquetaCliente.etiqueta.nombre }}
-            </v-chip>
-            <v-chip v-if="item.etiquetas.length > 2" color="grey" variant="text" size="x-small">
-              +{{ item.etiquetas.length - 2 }}
-            </v-chip>
-          </div>
-        </template>
-
-        <!-- Contactos -->
-        <template v-slot:item.contactos="{ item }">
-          <div class="text-center">
-            <v-chip
-              :color="item.contactos.length > 0 ? 'info' : 'warning'"
-              variant="tonal"
-              size="small"
-            >
-              <v-icon start>mdi-account-group</v-icon>
-              {{ item.contactos.length }}
-            </v-chip>
-          </div>
-        </template>
-
         <!-- Acciones -->
         <template v-slot:item.actions="{ item }">
           <div class="d-flex gap-1">
@@ -242,7 +225,7 @@
                   size="small"
                   variant="text"
                   color="primary"
-                  @click="$emit('ver-cliente', item)"
+                  @click="$emit('ver-contacto', item)"
                 />
               </template>
             </v-tooltip>
@@ -250,13 +233,13 @@
             <v-tooltip text="Editar">
               <template v-slot:activator="{ props }">
                 <v-btn
-                  v-if="hasPermission('clientes', 'editar')"
+                  v-if="hasPermission('contactos', 'editar')"
                   v-bind="props"
                   icon="mdi-pencil"
                   size="small"
                   variant="text"
                   color="warning"
-                  @click="$emit('editar-cliente', item)"
+                  @click="$emit('editar-contacto', item)"
                 />
               </template>
             </v-tooltip>
@@ -264,9 +247,9 @@
             <v-tooltip :text="item.activo ? 'Desactivar' : 'Activar'">
               <template v-slot:activator="{ props }">
                 <v-btn
-                  v-if="hasPermission('clientes', 'eliminar')"
+                  v-if="hasPermission('contactos', 'eliminar')"
                   v-bind="props"
-                  :icon="item.activo ? 'mdi-domain-remove' : 'mdi-domain-plus'"
+                  :icon="item.activo ? 'mdi-account-remove' : 'mdi-account-plus'"
                   size="small"
                   variant="text"
                   :color="item.activo ? 'error' : 'success'"
@@ -275,6 +258,33 @@
                       ? $emit('confirmar-eliminacion', item)
                       : $emit('toggle-estado', item)
                   "
+                />
+              </template>
+            </v-tooltip>
+
+            <v-tooltip text="Enviar correo">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-email"
+                  size="small"
+                  variant="text"
+                  color="info"
+                  @click="enviarCorreo(item)"
+                />
+              </template>
+            </v-tooltip>
+
+            <v-tooltip text="Ver cliente">
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-if="getClienteInfo(item.idCliente)"
+                  v-bind="props"
+                  icon="mdi-domain"
+                  size="small"
+                  variant="text"
+                  color="orange"
+                  @click="$emit('ver-cliente', item.idCliente)"
                 />
               </template>
             </v-tooltip>
@@ -287,37 +297,40 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { useClienteEmpresaStore } from '../store/cliente-empresa.store'
+import { useContactoClienteStore } from '../store/contacto-cliente.store'
+import { useClienteEmpresaStore } from '../../cliente-empresa/store/cliente-empresa.store'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
-import type { ClienteEmpresaListItem } from '../interfaces/cliente-empresa.interface'
+import type { ContactoClienteListItem } from '../interfaces/contacto-cliente.interface'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
 
 // Definir eventos que emite el componente
 const emit = defineEmits<{
-  'crear-cliente': []
-  'editar-cliente': [cliente: ClienteEmpresaListItem]
-  'ver-cliente': [cliente: ClienteEmpresaListItem]
-  'toggle-estado': [cliente: ClienteEmpresaListItem]
-  'confirmar-eliminacion': [cliente: ClienteEmpresaListItem]
+  'crear-contacto': []
+  'editar-contacto': [contacto: ContactoClienteListItem]
+  'ver-contacto': [contacto: ContactoClienteListItem]
+  'toggle-estado': [contacto: ContactoClienteListItem]
+  'confirmar-eliminacion': [contacto: ContactoClienteListItem]
+  'ver-cliente': [idCliente: string]
 }>()
 
+const contactoClienteStore = useContactoClienteStore()
 const clienteEmpresaStore = useClienteEmpresaStore()
 const authStore = useAuthStore()
 
 // Estado local
 const busqueda = ref('')
 const filtroEstado = ref('todos')
-const filtroEtiqueta = ref('')
+const filtroCliente = ref('')
 const pagina = ref(1)
 const itemsPorPagina = ref(10)
 
 // Computed
-const loading = computed(() => clienteEmpresaStore.loading)
-const clientes = computed(() => clienteEmpresaStore.clientes)
-const totalClientes = computed(() => clienteEmpresaStore.totalClientes)
-const clientesActivos = computed(() => clienteEmpresaStore.clientesActivos)
-const clientesInactivos = computed(() => clienteEmpresaStore.clientesInactivos)
-const clientesPorRubro = computed(() => clienteEmpresaStore.clientesPorRubro)
+const loading = computed(() => contactoClienteStore.loading)
+const contactos = computed(() => contactoClienteStore.contactos)
+const totalContactos = computed(() => contactoClienteStore.totalContactos)
+const contactosActivos = computed(() => contactoClienteStore.contactosActivos)
+const contactosInactivos = computed(() => contactoClienteStore.contactosInactivos)
+const contactosPorCargo = computed(() => contactoClienteStore.contactosPorCargo)
 
 // Opciones para filtros
 const opcionesEstado = [
@@ -326,40 +339,39 @@ const opcionesEstado = [
   { title: 'Inactivos', value: 'inactivo' },
 ]
 
-const etiquetasUnicas = computed(() => {
-  const etiquetasMap = new Map<string, string>()
-  clientes.value.forEach((cliente) => {
-    cliente.etiquetas.forEach((etiquetaCliente) => {
-      etiquetasMap.set(etiquetaCliente.idEtiqueta, etiquetaCliente.etiqueta.nombre)
-    })
-  })
-  return Array.from(etiquetasMap, ([id, nombre]) => ({ title: nombre, value: id }))
+const cargosUnicos = computed(() => {
+  return contactoClienteStore.cargosUnicos.map((cargo) => ({
+    title: cargo,
+    value: cargo,
+  }))
 })
+
+const clientesDisponibles = computed(() =>
+  clienteEmpresaStore.clientesActivos.filter((c) => c.activo),
+)
 
 // Headers de la tabla
 const headers = [
-  { title: 'Empresa', key: 'razonSocial', sortable: true },
-  { title: 'Contacto', key: 'contacto', sortable: false },
+  { title: 'Contacto', key: 'nombre', sortable: true },
+  { title: 'Cliente', key: 'cliente', sortable: false },
+  { title: 'Información', key: 'contacto', sortable: false },
   { title: 'Estado', key: 'activo', sortable: true },
-  { title: 'Etiquetas', key: 'etiquetas', sortable: false },
-  { title: 'Contactos', key: 'contactos', sortable: false },
-  { title: 'Acciones', key: 'actions', sortable: false, width: 180 },
+  { title: 'Acciones', key: 'actions', sortable: false, width: 200 },
 ]
 
-// Clientes filtrados
-const clientesFiltrados = computed(() => {
-  let resultado = clientes.value
+// Contactos filtrados
+const contactosFiltrados = computed(() => {
+  let resultado = contactos.value
 
   // Filtrar por búsqueda
   if (busqueda.value) {
     const termino = busqueda.value.toLowerCase()
     resultado = resultado.filter(
       (c) =>
-        c.razonSocial.toLowerCase().includes(termino) ||
-        c.correo.toLowerCase().includes(termino) ||
-        c.rubro.toLowerCase().includes(termino) ||
-        c.telefono.includes(termino) ||
-        c.direccion.toLowerCase().includes(termino),
+        c.nombre.toLowerCase().includes(termino) ||
+        c.cargo.toLowerCase().includes(termino) ||
+        c.email.toLowerCase().includes(termino) ||
+        c.telefono.includes(termino),
     )
   }
 
@@ -367,6 +379,11 @@ const clientesFiltrados = computed(() => {
   if (filtroEstado.value !== 'todos') {
     const estado = filtroEstado.value === 'activo'
     resultado = resultado.filter((c) => c.activo === estado)
+  }
+
+  // Filtrar por cliente
+  if (filtroCliente.value) {
+    resultado = resultado.filter((c) => c.idCliente === filtroCliente.value)
   }
 
   // Ordenar: activos primero, luego inactivos
@@ -378,39 +395,57 @@ const clientesFiltrados = computed(() => {
   return resultado
 })
 
-// Watchers
-watch(filtroEtiqueta, (nuevoValor) => {
-  if (nuevoValor) {
-    clienteEmpresaStore.cargarClientes({ etiquetaId: nuevoValor })
-  } else {
-    clienteEmpresaStore.cargarClientes()
-  }
-})
-
 // Métodos
 function hasPermission(modulo: string, accion: string): boolean {
   if (!authStore.user?.permisos) return false
   return authStore.user.permisos.some((p: Permission) => p.modulo === modulo && p.accion === accion)
 }
 
-async function cargarClientes() {
-  await clienteEmpresaStore.cargarClientes()
+function getClienteInfo(idCliente: string) {
+  return clienteEmpresaStore.clientes.find((c) => c.idCliente === idCliente)
+}
+
+function enviarCorreo(contacto: ContactoClienteListItem) {
+  window.open(`mailto:${contacto.email}`)
+}
+
+async function cargarContactos() {
+  // Cargar clientes si no están cargados
+  if (clienteEmpresaStore.clientes.length === 0) {
+    await clienteEmpresaStore.cargarClientes()
+  }
+
+  // Si no hay filtro de cliente, cargar todos los contactos
+  if (!filtroCliente.value) {
+    await contactoClienteStore.cargarTodosContactos()
+  } else {
+    await contactoClienteStore.cargarContactosPorCliente(filtroCliente.value)
+  }
 }
 
 function limpiarFiltros() {
   busqueda.value = ''
   filtroEstado.value = 'todos'
-  filtroEtiqueta.value = ''
+  filtroCliente.value = ''
 }
+
+// Watchers
+watch(filtroCliente, async (nuevoCliente) => {
+  if (nuevoCliente) {
+    await contactoClienteStore.cargarContactosPorCliente(nuevoCliente)
+  } else {
+    await contactoClienteStore.cargarTodosContactos()
+  }
+})
 
 // Inicialización
 onMounted(() => {
-  cargarClientes()
+  cargarContactos()
 })
 </script>
 
 <style scoped>
-.clientes-empresa-container {
+.contactos-cliente-container {
   padding: 5px;
 }
 
@@ -437,7 +472,7 @@ onMounted(() => {
 }
 
 @media (max-width: 960px) {
-  .clientes-empresa-container {
+  .contactos-cliente-container {
     padding: 0;
   }
 }

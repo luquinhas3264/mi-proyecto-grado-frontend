@@ -195,12 +195,12 @@ export const useClienteEmpresaStore = defineStore('clienteEmpresa', {
       const cliente = this.clientes.find((c) => c.idCliente === id)
       if (cliente) {
         await this.actualizarCliente(id, {
-          // Se mantienen los datos existentes y solo se cambia el estado
           razonSocial: cliente.razonSocial,
           rubro: cliente.rubro,
           correo: cliente.correo,
           telefono: cliente.telefono,
           direccion: cliente.direccion,
+          activo: !cliente.activo,
         })
 
         // Recargar para obtener el estado actualizado desde el servidor

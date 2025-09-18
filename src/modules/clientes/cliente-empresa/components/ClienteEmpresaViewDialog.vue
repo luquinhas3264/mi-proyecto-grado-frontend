@@ -249,7 +249,7 @@
                 :color="cliente.activo ? 'error' : 'success'"
                 variant="outlined"
                 size="small"
-                :prepend-icon="cliente.activo ? 'mdi-domain-off' : 'mdi-domain-check'"
+                :prepend-icon="cliente.activo ? 'mdi-domain-remove' : 'mdi-domain-plus'"
                 @click="toggleEstado"
               >
                 {{ cliente.activo ? 'Desactivar' : 'Activar' }}

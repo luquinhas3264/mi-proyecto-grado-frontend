@@ -131,7 +131,14 @@
 
         <!-- Tab de Contactos -->
         <v-window-item value="contactos">
-          <ContactoClienteListPage />
+          <ContactoClienteListPage
+            @crear-contacto="mostrarDialogoCrearContacto = true"
+            @editar-contacto="editarContacto"
+            @ver-contacto="verContacto"
+            @toggle-estado="toggleEstadoContacto"
+            @confirmar-eliminacion="confirmarEliminacionContacto"
+            @ver-cliente="verClienteDesdeContacto"
+          />
         </v-window-item>
 
         <!-- Tab de Etiquetas -->
@@ -165,12 +172,33 @@
       @toggle-estado="toggleEstadoEmpresa"
     />
 
-    <!-- Dialog de confirmación de eliminación -->
-    <v-dialog v-model="mostrarConfirmacionEliminacion" max-width="500">
+    <!-- Dialogs de Contacto Cliente -->
+    <ContactoClienteCreateDialog
+      v-model="mostrarDialogoCrearContacto"
+      :cliente-preseleccionado="clientePreseleccionado"
+      @contacto-creado="onContactoCreado"
+    />
+
+    <ContactoClienteEditDialog
+      v-model="mostrarDialogoEditarContacto"
+      :contacto="contactoSeleccionado"
+      @contacto-actualizado="onContactoActualizado"
+    />
+
+    <ContactoClienteViewDialog
+      v-model="mostrarDialogoVerContacto"
+      :contacto="contactoSeleccionado"
+      @editar-contacto="editarContacto"
+      @toggle-estado="toggleEstadoContacto"
+      @ver-cliente="verClienteDesdeContacto"
+    />
+
+    <!-- Dialog de confirmación de eliminación para empresas -->
+    <v-dialog v-model="mostrarConfirmacionEliminacionEmpresa" max-width="500">
       <v-card>
         <v-card-title class="text-h6">
           <v-icon class="mr-2" color="error">mdi-alert</v-icon>
-          Confirmar Eliminación
+          Confirmar Eliminación de Cliente
         </v-card-title>
         <v-card-text>
           <p>
@@ -187,12 +215,46 @@
           <v-spacer />
           <v-btn
             variant="outlined"
-            @click="mostrarConfirmacionEliminacion = false"
+            @click="mostrarConfirmacionEliminacionEmpresa = false"
             :disabled="loading"
           >
             Cancelar
           </v-btn>
           <v-btn color="error" @click="eliminarEmpresa" :loading="loading">
+            Confirmar Eliminación
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog de confirmación de eliminación para contactos -->
+    <v-dialog v-model="mostrarConfirmacionEliminacionContacto" max-width="500">
+      <v-card>
+        <v-card-title class="text-h6">
+          <v-icon class="mr-2" color="error">mdi-alert</v-icon>
+          Confirmar Eliminación de Contacto
+        </v-card-title>
+        <v-card-text>
+          <p>
+            ¿Está seguro que desea eliminar el contacto
+            <strong>{{ contactoAEliminar?.nombre }}</strong
+            >?
+          </p>
+          <v-alert type="warning" variant="tonal" class="mt-3">
+            Esta acción desactivará el contacto. Los datos no se perderán pero el contacto ya no
+            estará disponible.
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            @click="mostrarConfirmacionEliminacionContacto = false"
+            :disabled="loading"
+          >
+            Cancelar
+          </v-btn>
+          <v-btn color="error" @click="eliminarContacto" :loading="loading">
             Confirmar Eliminación
           </v-btn>
         </v-card-actions>
@@ -219,8 +281,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
 import { useClienteEmpresaStore } from '../cliente-empresa/store/cliente-empresa.store'
+import { useContactoClienteStore } from '../contacto-cliente/store/contacto-cliente.store'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
 import type { ClienteEmpresaListItem } from '../cliente-empresa/interfaces/cliente-empresa.interface'
+import type { ContactoClienteListItem } from '../contacto-cliente/interfaces/contacto-cliente.interface'
 
 // Importar componentes de cada submódulo
 import ClienteEmpresaListPage from '../cliente-empresa/pages/ClienteEmpresaListPage.vue'
@@ -228,10 +292,12 @@ import ClienteEmpresaCreateDialog from '../cliente-empresa/components/ClienteEmp
 import ClienteEmpresaEditDialog from '../cliente-empresa/components/ClienteEmpresaEditDialog.vue'
 import ClienteEmpresaViewDialog from '../cliente-empresa/components/ClienteEmpresaViewDialog.vue'
 
+import ContactoClienteListPage from '../contacto-cliente/pages/ContactoClienteListPage.vue'
+import ContactoClienteCreateDialog from '../contacto-cliente/components/ContactoClienteCreateDialog.vue'
+import ContactoClienteEditDialog from '../contacto-cliente/components/ContactoClienteEditDialog.vue'
+import ContactoClienteViewDialog from '../contacto-cliente/components/ContactoClienteViewDialog.vue'
+
 // Componentes temporales mientras no existan
-const ContactoClienteListPage = {
-  template: '<div class="pa-4"><h3>Módulo de Contactos (En desarrollo)</h3></div>',
-}
 const EtiquetaClienteListPage = {
   template: '<div class="pa-4"><h3>Módulo de Etiquetas (En desarrollo)</h3></div>',
 }
@@ -243,6 +309,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const clienteEmpresaStore = useClienteEmpresaStore()
+const contactoClienteStore = useContactoClienteStore()
 
 // Estado local
 const tabActivo = ref('empresas')
@@ -252,9 +319,18 @@ const loading = ref(false)
 const mostrarDialogoCrearEmpresa = ref(false)
 const mostrarDialogoEditarEmpresa = ref(false)
 const mostrarDialogoVerEmpresa = ref(false)
-const mostrarConfirmacionEliminacion = ref(false)
+const mostrarConfirmacionEliminacionEmpresa = ref(false)
 const empresaSeleccionada = ref<ClienteEmpresaListItem | null>(null)
 const empresaAEliminar = ref<ClienteEmpresaListItem | null>(null)
+
+// Estados de dialogs de Contacto Cliente
+const mostrarDialogoCrearContacto = ref(false)
+const mostrarDialogoEditarContacto = ref(false)
+const mostrarDialogoVerContacto = ref(false)
+const mostrarConfirmacionEliminacionContacto = ref(false)
+const contactoSeleccionado = ref<ContactoClienteListItem | null>(null)
+const contactoAEliminar = ref<ContactoClienteListItem | null>(null)
+const clientePreseleccionado = ref<string>('')
 
 // Snackbar
 const snackbar = ref({
@@ -266,7 +342,7 @@ const snackbar = ref({
 // Estadísticas computadas
 const estadisticas = computed(() => ({
   empresas: clienteEmpresaStore.totalClientes,
-  contactos: 0, // Pendiente de implementar
+  contactos: contactoClienteStore.totalContactos,
   etiquetas: 0, // Pendiente de implementar
   interacciones: 0, // Pendiente de implementar
 }))
@@ -283,7 +359,7 @@ const accionesRapidas = {
     mostrarDialogoCrearEmpresa.value = true
   },
   nuevoContacto: () => {
-    console.log('Abrir dialog nuevo contacto')
+    mostrarDialogoCrearContacto.value = true
   },
   nuevaEtiqueta: () => {
     console.log('Abrir dialog nueva etiqueta')
@@ -307,8 +383,7 @@ function verEmpresa(empresa: ClienteEmpresaListItem) {
 async function toggleEstadoEmpresa(empresa: ClienteEmpresaListItem) {
   try {
     loading.value = true
-    const nuevoEstado = !empresa.activo
-    await clienteEmpresaStore.actualizarCliente(empresa.idCliente, { activo: nuevoEstado })
+    await clienteEmpresaStore.toggleEstadoCliente(empresa.idCliente)
 
     // Actualizar empresaSeleccionada si coincide
     if (empresaSeleccionada.value?.idCliente === empresa.idCliente) {
@@ -333,7 +408,7 @@ async function toggleEstadoEmpresa(empresa: ClienteEmpresaListItem) {
 
 function confirmarEliminacionEmpresa(empresa: ClienteEmpresaListItem) {
   empresaAEliminar.value = empresa
-  mostrarConfirmacionEliminacion.value = true
+  mostrarConfirmacionEliminacionEmpresa.value = true
 }
 
 async function eliminarEmpresa() {
@@ -342,13 +417,80 @@ async function eliminarEmpresa() {
   try {
     loading.value = true
     await clienteEmpresaStore.eliminarCliente(empresaAEliminar.value.idCliente)
-    mostrarConfirmacionEliminacion.value = false
+    mostrarConfirmacionEliminacionEmpresa.value = false
     empresaAEliminar.value = null
     mostrarMensaje('Cliente eliminado correctamente', 'success')
   } catch (error) {
     mostrarMensaje('Error al eliminar el cliente', 'error')
   } finally {
     loading.value = false
+  }
+}
+
+// Métodos para manejo de Contacto Cliente
+function editarContacto(contacto: ContactoClienteListItem) {
+  contactoSeleccionado.value = contacto
+  mostrarDialogoEditarContacto.value = true
+}
+
+function verContacto(contacto: ContactoClienteListItem) {
+  contactoSeleccionado.value = contacto
+  mostrarDialogoVerContacto.value = true
+}
+
+async function toggleEstadoContacto(contacto: ContactoClienteListItem) {
+  try {
+    loading.value = true
+    await contactoClienteStore.toggleEstadoContacto(contacto.idContacto)
+
+    // Actualizar contactoSeleccionado si coincide
+    if (contactoSeleccionado.value?.idContacto === contacto.idContacto) {
+      const actualizado = contactoClienteStore.contactos.find(
+        (c) => c.idContacto === contacto.idContacto,
+      )
+      if (actualizado) {
+        contactoSeleccionado.value = { ...actualizado }
+      }
+    }
+
+    mostrarMensaje(
+      `Contacto ${contacto.activo ? 'desactivado' : 'activado'} correctamente`,
+      'success',
+    )
+  } catch (error) {
+    mostrarMensaje('Error al cambiar el estado del contacto', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+function confirmarEliminacionContacto(contacto: ContactoClienteListItem) {
+  contactoAEliminar.value = contacto
+  mostrarConfirmacionEliminacionContacto.value = true
+}
+
+async function eliminarContacto() {
+  if (!contactoAEliminar.value) return
+
+  try {
+    loading.value = true
+    await contactoClienteStore.eliminarContacto(contactoAEliminar.value.idContacto)
+    mostrarConfirmacionEliminacionContacto.value = false
+    contactoAEliminar.value = null
+    mostrarMensaje('Contacto eliminado correctamente', 'success')
+  } catch (error) {
+    mostrarMensaje('Error al eliminar el contacto', 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
+function verClienteDesdeContacto(idCliente: string) {
+  // Cambiar al tab de empresas y buscar el cliente
+  tabActivo.value = 'empresas'
+  const cliente = clienteEmpresaStore.clientes.find((c) => c.idCliente === idCliente)
+  if (cliente) {
+    verEmpresa(cliente)
   }
 }
 
@@ -363,6 +505,17 @@ function onEmpresaActualizada() {
   mostrarMensaje('Cliente actualizado correctamente', 'success')
 }
 
+function onContactoCreado() {
+  mostrarDialogoCrearContacto.value = false
+  clientePreseleccionado.value = ''
+  mostrarMensaje('Contacto creado correctamente', 'success')
+}
+
+function onContactoActualizado() {
+  mostrarDialogoEditarContacto.value = false
+  mostrarMensaje('Contacto actualizado correctamente', 'success')
+}
+
 function mostrarMensaje(message: string, color: string) {
   snackbar.value = { show: true, message, color }
 }
@@ -372,6 +525,9 @@ async function cargarEstadisticas() {
   try {
     if (tabActivo.value === 'empresas') {
       await clienteEmpresaStore.cargarClientes()
+    } else if (tabActivo.value === 'contactos') {
+      // Los contactos se cargan por cliente, no hay endpoint general aún
+      // await contactoClienteStore.cargarTodosContactos()
     }
     // Aquí cargarías estadísticas de otros módulos según el tab activo
   } catch (error) {
@@ -384,6 +540,9 @@ watch(tabActivo, (nuevoTab) => {
   // Actualizar URL sin recargar
   const nuevaRuta = nuevoTab === 'empresas' ? '/clientes' : `/clientes/${nuevoTab}`
   router.replace(nuevaRuta)
+
+  // Cargar datos del nuevo tab
+  cargarEstadisticas()
 })
 
 // Determinar tab activo según la ruta
