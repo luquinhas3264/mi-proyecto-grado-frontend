@@ -39,7 +39,7 @@ export class EtiquetaClienteService {
   }
 
   // Obtener etiqueta específica por ID
-  static async obtenerPorId(id: string): Promise<EtiquetaClienteDetalle> {
+  static async obtenerPorId(id: string): Promise<EtiquetaClienteListItem> {
     // Como no hay endpoint específico, usar el filtrado por ID desde obtenerTodas
     const etiquetas = await this.obtenerTodas()
     const etiqueta = etiquetas.find((e) => e.idEtiqueta === id)

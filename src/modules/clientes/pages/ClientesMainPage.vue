@@ -156,7 +156,13 @@
 
         <!-- Tab de Interacciones -->
         <v-window-item value="interacciones">
-          <InteraccionClienteListPage />
+          <InteraccionClienteListPage
+            @crear-interaccion="mostrarDialogoCrearInteraccion = true"
+            @ver-interaccion="verInteraccion"
+            @ver-contacto="verContactoDesdeInteraccion"
+            @ver-cliente="verClienteDesdeInteraccion"
+            @nueva-interaccion-contacto="nuevaInteraccionContacto"
+          />
         </v-window-item>
       </v-window>
     </div>
@@ -201,6 +207,7 @@
       @ver-cliente="verClienteDesdeContacto"
     />
 
+    <!-- Dialogs de Etiqueta Cliente -->
     <EtiquetaClienteCreateDialog
       v-model="mostrarDialogoCrearEtiqueta"
       @etiqueta-creada="onEtiquetaCreada"
@@ -219,6 +226,22 @@
       @confirmar-eliminacion="confirmarEliminacionEtiqueta"
       @asignar-etiqueta="asignarEtiqueta"
       @ver-cliente="verClienteDesdeEtiqueta"
+    />
+
+    <!-- Dialogs de Interacción Cliente -->
+    <InteraccionClienteCreateDialog
+      v-model="mostrarDialogoCrearInteraccion"
+      :contacto-preseleccionado="contactoPreseleccionado"
+      :cliente-preseleccionado="clientePreseleccionado"
+      @interaccion-creada="onInteraccionCreada"
+    />
+
+    <InteraccionClienteViewDialog
+      v-model="mostrarDialogoVerInteraccion"
+      :interaccion="interaccionSeleccionada"
+      @ver-contacto="verContactoDesdeInteraccion"
+      @ver-cliente="verClienteDesdeInteraccion"
+      @nueva-interaccion="nuevaInteraccionContacto"
     />
 
     <!-- Dialog de confirmación de eliminación para empresas -->
@@ -324,7 +347,7 @@
       </v-card>
     </v-dialog>
 
-    <!-- Dialog para asignación masiva de etiquetas (opcional) -->
+    <!-- Dialog para asignación masiva de etiquetas -->
     <v-dialog v-model="mostrarDialogoAsignacionMasiva" max-width="800">
       <v-card>
         <v-card-title class="text-h6">
@@ -336,7 +359,6 @@
             Selecciona los clientes y etiquetas para realizar asignaciones masivas.
           </p>
 
-          <!-- Contenido del dialog de asignación masiva -->
           <v-row>
             <v-col cols="12" md="6">
               <v-card variant="outlined">
@@ -529,18 +551,18 @@
 </template>
 
 <script setup lang="ts">
-// Script setup actualizado para ClientesMainPage.vue
-
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
 import { useClienteEmpresaStore } from '../cliente-empresa/store/cliente-empresa.store'
 import { useContactoClienteStore } from '../contacto-cliente/store/contacto-cliente.store'
 import { useEtiquetaClienteStore } from '../etiqueta-cliente/store/etiqueta-cliente.store'
+import { useInteraccionClienteStore } from '../interaccion-cliente/store/interaccion-cliente.store'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
 import type { ClienteEmpresaListItem } from '../cliente-empresa/interfaces/cliente-empresa.interface'
 import type { ContactoClienteListItem } from '../contacto-cliente/interfaces/contacto-cliente.interface'
 import type { EtiquetaClienteListItem } from '../etiqueta-cliente/interfaces/etiqueta-cliente.interface'
+import type { InteraccionClienteConContacto } from '../interaccion-cliente/interfaces/interaccion-cliente.interface'
 
 // Importar componentes de cada submódulo
 import ClienteEmpresaListPage from '../cliente-empresa/pages/ClienteEmpresaListPage.vue'
@@ -558,10 +580,9 @@ import EtiquetaClienteCreateDialog from '../etiqueta-cliente/components/Etiqueta
 import EtiquetaClienteEditDialog from '../etiqueta-cliente/components/EtiquetaClienteEditDialog.vue'
 import EtiquetaClienteViewDialog from '../etiqueta-cliente/components/EtiquetaClienteViewDialog.vue'
 
-// Componente temporal mientras no existe
-const InteraccionClienteListPage = {
-  template: '<div class="pa-4"><h3>Módulo de Interacciones (En desarrollo)</h3></div>',
-}
+import InteraccionClienteListPage from '../interaccion-cliente/pages/InteraccionClienteListPage.vue'
+import InteraccionClienteCreateDialog from '../interaccion-cliente/components/InteraccionClienteCreateDialog.vue'
+import InteraccionClienteViewDialog from '../interaccion-cliente/components/InteraccionClienteViewDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -569,6 +590,7 @@ const authStore = useAuthStore()
 const clienteEmpresaStore = useClienteEmpresaStore()
 const contactoClienteStore = useContactoClienteStore()
 const etiquetaClienteStore = useEtiquetaClienteStore()
+const interaccionClienteStore = useInteraccionClienteStore()
 
 // Estado local
 const tabActivo = ref('empresas')
@@ -599,6 +621,12 @@ const mostrarConfirmacionEliminacionEtiqueta = ref(false)
 const etiquetaSeleccionada = ref<EtiquetaClienteListItem | null>(null)
 const etiquetaAEliminar = ref<EtiquetaClienteListItem | null>(null)
 
+// Estados de dialogs de Interacción Cliente
+const mostrarDialogoCrearInteraccion = ref(false)
+const mostrarDialogoVerInteraccion = ref(false)
+const interaccionSeleccionada = ref<InteraccionClienteConContacto | null>(null)
+const contactoPreseleccionado = ref<string>('')
+
 // Estados para asignación masiva
 const mostrarDialogoAsignacionMasiva = ref(false)
 const clientesSeleccionados = ref<string[]>([])
@@ -607,27 +635,10 @@ const etiquetasSeleccionadas = ref<string[]>([])
 // Estados para remoción de etiquetas de clientes
 const mostrarDialogoRemoverEtiqueta = ref(false)
 const clientesRemoverSeleccionados = ref<string[]>([])
-// Computed: clientes asignados a la etiqueta seleccionada
-const clientesAsignadosEtiqueta = computed(() => {
-  if (!etiquetaSeleccionada.value) return []
-  // Devuelve los clientes que tienen la etiqueta seleccionada en su array de etiquetas
-  return clienteEmpresaStore.clientes.filter((cliente) =>
-    cliente.etiquetas?.some((e) => e.idEtiqueta === etiquetaSeleccionada.value?.idEtiqueta),
-  )
-})
 
 // Asignación individual de etiqueta a clientes
 const mostrarDialogoAsignarEtiqueta = ref(false)
 const clientesAsignarSeleccionados = ref<string[]>([])
-const clientesDisponiblesAsignacion = computed(() => {
-  if (!etiquetaSeleccionada.value) return []
-  // Devuelve los clientes que NO tienen la etiqueta seleccionada y están activos
-  return clienteEmpresaStore.clientes.filter(
-    (cliente) =>
-      cliente.activo &&
-      !cliente.etiquetas?.some((e) => e.idEtiqueta === etiquetaSeleccionada.value?.idEtiqueta),
-  )
-})
 
 // Snackbar
 const snackbar = ref({
@@ -636,12 +647,30 @@ const snackbar = ref({
   color: 'success',
 })
 
+// Computed: clientes asignados a la etiqueta seleccionada
+const clientesAsignadosEtiqueta = computed(() => {
+  if (!etiquetaSeleccionada.value) return []
+  return clienteEmpresaStore.clientes.filter((cliente) =>
+    cliente.etiquetas?.some((e) => e.idEtiqueta === etiquetaSeleccionada.value?.idEtiqueta),
+  )
+})
+
+// Clientes disponibles para asignación
+const clientesDisponiblesAsignacion = computed(() => {
+  if (!etiquetaSeleccionada.value) return []
+  return clienteEmpresaStore.clientes.filter(
+    (cliente) =>
+      cliente.activo &&
+      !cliente.etiquetas?.some((e) => e.idEtiqueta === etiquetaSeleccionada.value?.idEtiqueta),
+  )
+})
+
 // Estadísticas computadas
 const estadisticas = computed(() => ({
   empresas: clienteEmpresaStore.totalClientes,
   contactos: contactoClienteStore.totalContactos,
   etiquetas: etiquetaClienteStore.totalEtiquetas,
-  interacciones: 0, // Pendiente de implementar
+  interacciones: interaccionClienteStore.totalInteracciones,
 }))
 
 // Computed
@@ -662,11 +691,11 @@ const accionesRapidas = {
     mostrarDialogoCrearEtiqueta.value = true
   },
   nuevaInteraccion: () => {
-    console.log('Abrir dialog nueva interacción')
+    mostrarDialogoCrearInteraccion.value = true
   },
 }
 
-// Métodos para manejo de Cliente Empresa
+// =========== MÉTODOS PARA CLIENTE EMPRESA ===========
 function editarEmpresa(empresa: ClienteEmpresaListItem) {
   empresaSeleccionada.value = empresa
   mostrarDialogoEditarEmpresa.value = true
@@ -724,7 +753,7 @@ async function eliminarEmpresa() {
   }
 }
 
-// Métodos para manejo de Contacto Cliente
+// =========== MÉTODOS PARA CONTACTO CLIENTE ===========
 function editarContacto(contacto: ContactoClienteListItem) {
   contactoSeleccionado.value = contacto
   mostrarDialogoEditarContacto.value = true
@@ -783,7 +812,6 @@ async function eliminarContacto() {
 }
 
 function verClienteDesdeContacto(idCliente: string) {
-  // Cambiar al tab de empresas y buscar el cliente
   tabActivo.value = 'empresas'
   const cliente = clienteEmpresaStore.clientes.find((c) => c.idCliente === idCliente)
   if (cliente) {
@@ -791,7 +819,7 @@ function verClienteDesdeContacto(idCliente: string) {
   }
 }
 
-// Métodos para manejo de Etiqueta Cliente
+// =========== MÉTODOS PARA ETIQUETA CLIENTE ===========
 function editarEtiqueta(etiqueta: EtiquetaClienteListItem) {
   etiquetaSeleccionada.value = etiqueta
   mostrarDialogoEditarEtiqueta.value = true
@@ -823,7 +851,6 @@ async function eliminarEtiqueta() {
   }
 }
 
-// Método para abrir el diálogo de asignar etiqueta individual
 function asignarEtiqueta(etiqueta: EtiquetaClienteListItem) {
   etiquetaSeleccionada.value = etiqueta
   clientesAsignarSeleccionados.value = []
@@ -866,7 +893,6 @@ async function ejecutarAsignarEtiqueta() {
   }
 }
 
-// Método para abrir el diálogo de remoción de etiqueta
 function abrirRemoverEtiqueta(etiqueta: EtiquetaClienteListItem) {
   etiquetaSeleccionada.value = etiqueta
   clientesRemoverSeleccionados.value = []
@@ -910,7 +936,6 @@ async function ejecutarRemoverEtiqueta() {
 }
 
 function verClienteDesdeEtiqueta(idCliente: string) {
-  // Similar a verClienteDesdeContacto
   tabActivo.value = 'empresas'
   const cliente = clienteEmpresaStore.clientes.find((c) => c.idCliente === idCliente)
   if (cliente) {
@@ -918,7 +943,41 @@ function verClienteDesdeEtiqueta(idCliente: string) {
   }
 }
 
-// Métodos para asignación masiva
+// =========== MÉTODOS PARA INTERACCIÓN CLIENTE ===========
+function verInteraccion(interaccion: InteraccionClienteConContacto) {
+  interaccionSeleccionada.value = interaccion
+  mostrarDialogoVerInteraccion.value = true
+}
+
+function verContactoDesdeInteraccion(idContacto: string) {
+  tabActivo.value = 'contactos'
+  const contacto = contactoClienteStore.contactos.find((c) => c.idContacto === idContacto)
+  if (contacto) {
+    verContacto(contacto)
+  }
+}
+
+function verClienteDesdeInteraccion(idCliente: string) {
+  tabActivo.value = 'empresas'
+  const cliente = clienteEmpresaStore.clientes.find((c) => c.idCliente === idCliente)
+  if (cliente) {
+    verEmpresa(cliente)
+  } else {
+    mostrarMensaje('No se encontró el cliente asociado', 'error')
+  }
+}
+
+function nuevaInteraccionContacto(idContacto: string) {
+  contactoPreseleccionado.value = idContacto
+  // También preseleccionar el cliente del contacto
+  const contacto = contactoClienteStore.contactos.find((c) => c.idContacto === idContacto)
+  if (contacto) {
+    clientePreseleccionado.value = contacto.idCliente
+  }
+  mostrarDialogoCrearInteraccion.value = true
+}
+
+// =========== MÉTODOS PARA ASIGNACIÓN MASIVA ===========
 function abrirAsignacionMasiva() {
   clientesSeleccionados.value = []
   etiquetasSeleccionadas.value = []
@@ -1009,7 +1068,7 @@ function generarColorEtiqueta(nombre: string) {
   return colores[Math.abs(hash) % colores.length]
 }
 
-// Event handlers
+// =========== EVENT HANDLERS ===========
 function onEmpresaCreada() {
   mostrarDialogoCrearEmpresa.value = false
   mostrarMensaje('Cliente creado correctamente', 'success')
@@ -1041,29 +1100,40 @@ function onEtiquetaActualizada() {
   mostrarMensaje('Etiqueta actualizada correctamente', 'success')
 }
 
+function onInteraccionCreada() {
+  mostrarDialogoCrearInteraccion.value = false
+  contactoPreseleccionado.value = ''
+  clientePreseleccionado.value = ''
+  mostrarMensaje('Interacción registrada correctamente', 'success')
+}
+
 function mostrarMensaje(message: string, color: string) {
   snackbar.value = { show: true, message, color }
 }
 
-// Cargar estadísticas
+// =========== CARGAR ESTADÍSTICAS ===========
 async function cargarEstadisticas() {
   try {
     if (tabActivo.value === 'empresas') {
       await clienteEmpresaStore.cargarClientes()
       await etiquetaClienteStore.cargarEtiquetas()
     } else if (tabActivo.value === 'contactos') {
-      // Los contactos se cargan por cliente, no hay endpoint general aún
-      // await contactoClienteStore.cargarTodosContactos()
+      if (contactoClienteStore.contactos.length === 0) {
+        await contactoClienteStore.cargarTodosContactos()
+      }
     } else if (tabActivo.value === 'etiquetas') {
       await etiquetaClienteStore.cargarEtiquetas()
+      await clienteEmpresaStore.cargarClientes() // Para mostrar las asignaciones
+    } else if (tabActivo.value === 'interacciones') {
+      await clienteEmpresaStore.cargarClientes()
+      await contactoClienteStore.cargarTodosContactos()
     }
-    // Aquí cargarías estadísticas de otros módulos según el tab activo
   } catch (error) {
     console.error('Error cargando estadísticas:', error)
   }
 }
 
-// Manejar cambios de tab y URL
+// =========== MANEJO DE TABS Y NAVEGACIÓN ===========
 watch(tabActivo, (nuevoTab) => {
   // Actualizar URL sin recargar
   const nuevaRuta = nuevoTab === 'empresas' ? '/clientes' : `/clientes/${nuevoTab}`
@@ -1073,7 +1143,6 @@ watch(tabActivo, (nuevoTab) => {
   cargarEstadisticas()
 })
 
-// Determinar tab activo según la ruta
 function determinarTabPorRuta() {
   const path = route.path
   if (path.includes('/contactos')) {
@@ -1087,7 +1156,7 @@ function determinarTabPorRuta() {
   }
 }
 
-// Lifecycle
+// =========== LIFECYCLE ===========
 onMounted(() => {
   determinarTabPorRuta()
   cargarEstadisticas()

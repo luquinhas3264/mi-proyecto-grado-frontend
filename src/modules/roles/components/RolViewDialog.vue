@@ -73,11 +73,9 @@
 
         <!-- Permisos del Rol -->
         <v-card variant="outlined" class="mb-4">
-          <v-card-title class="text-h6 text-contraste d-flex align-center justify-space-between">
-            <div class="d-flex align-center">
-              <v-icon class="mr-2">mdi-key-outline</v-icon>
-              Permisos Asignados
-            </div>
+          <v-card-title class="text-h6 text-contraste">
+            <v-icon class="mr-2">mdi-key-outline</v-icon>
+            Permisos Asignados
             <v-btn
               v-if="hasPermission('roles', 'editar-permisos')"
               color="white"

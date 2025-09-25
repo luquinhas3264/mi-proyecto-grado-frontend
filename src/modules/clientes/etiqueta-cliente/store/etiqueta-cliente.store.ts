@@ -13,7 +13,7 @@ import { EtiquetaClienteService } from '../services/etiqueta-cliente.service'
 
 interface EtiquetaClienteState {
   etiquetas: EtiquetaClienteListItem[]
-  etiquetaActual: EtiquetaClienteDetalle | null
+  etiquetaActual: EtiquetaClienteListItem | null
   asignaciones: Record<string, string[]> // idCliente -> array de idEtiquetas
   loading: boolean
   error: string | null
