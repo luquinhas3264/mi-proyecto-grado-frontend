@@ -197,30 +197,40 @@
           </v-card-title>
           <v-card-text class="pt-4">
             <v-list density="compact">
-              <v-list-item
-                v-for="proyecto in clienteDetalle.proyectos"
-                :key="proyecto.idProyecto"
-                class="mb-2"
+              <template
+                v-if="clienteDetalle.proyectos.filter((p) => p.activo !== false).length > 0"
               >
-                <template v-slot:prepend>
-                  <v-icon color="#485696" style="opacity: 1">mdi-folder</v-icon>
-                </template>
-                <v-list-item-title class="font-weight-medium">
-                  {{ proyecto.nombre }}
-                </v-list-item-title>
-                <v-list-item-subtitle>
-                  {{ proyecto.descripcion }}
-                </v-list-item-subtitle>
-                <template v-slot:append>
-                  <v-chip
-                    :color="getEstadoProyectoColor(proyecto.estado)"
-                    size="small"
-                    variant="tonal"
-                  >
-                    {{ proyecto.estado }}
-                  </v-chip>
-                </template>
-              </v-list-item>
+                <v-list-item
+                  v-for="proyecto in clienteDetalle.proyectos.filter((p) => p.activo !== false)"
+                  :key="proyecto.idProyecto"
+                  class="mb-2"
+                >
+                  <template v-slot:prepend>
+                    <v-icon color="#485696" style="opacity: 1">mdi-folder</v-icon>
+                  </template>
+                  <v-list-item-title class="font-weight-medium">
+                    {{ proyecto.nombre }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    {{ proyecto.descripcion }}
+                  </v-list-item-subtitle>
+                  <template v-slot:append>
+                    <v-chip
+                      :color="getEstadoProyectoColor(proyecto.estado)"
+                      size="small"
+                      variant="tonal"
+                    >
+                      {{ proyecto.estado }}
+                    </v-chip>
+                  </template>
+                </v-list-item>
+              </template>
+              <template v-else>
+                <div class="text-center text-grey-darken-1 py-4">
+                  <v-icon size="32" color="grey">mdi-folder-remove</v-icon>
+                  <div class="mt-2">Sin proyectos activos</div>
+                </div>
+              </template>
             </v-list>
           </v-card-text>
         </v-card>

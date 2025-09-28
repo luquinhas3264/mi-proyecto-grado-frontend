@@ -121,6 +121,106 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
 
+      {
+        path: 'proyectos',
+        name: 'Proyectos',
+        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'proyectos', accion: 'ver' },
+        },
+      },
+      {
+        path: 'proyectos/tareas',
+        name: 'ProyectosTareas',
+        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'tareas', accion: 'ver' },
+        },
+      },
+      {
+        path: 'proyectos/notas',
+        name: 'ProyectosNotas',
+        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'notas-proyecto', accion: 'ver' },
+        },
+      },
+      {
+        path: 'proyectos/archivos',
+        name: 'ProyectosArchivos',
+        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'archivos', accion: 'ver' },
+        },
+      },
+
+      // Ruta para el detalle específico de un proyecto
+      {
+        path: 'proyectos/:id',
+        name: 'ProyectoDetalle',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'proyectos', accion: 'ver' },
+        },
+        // Validación de parámetro ID
+        beforeEnter: (to, from, next) => {
+          const id = to.params.id as string
+          // Validar que el ID tenga un formato válido (UUID, número, etc.)
+          if (id && id.length > 0) {
+            next()
+          } else {
+            // Redirigir a la lista si el ID no es válido
+            next('/proyectos')
+          }
+        },
+      },
+      // Rutas adicionales para el detalle con tabs específicos (opcional)
+      {
+        path: 'proyectos/:id/informacion',
+        name: 'ProyectoDetalleInformacion',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'proyectos', accion: 'ver' },
+          defaultTab: 'informacion',
+        },
+      },
+      {
+        path: 'proyectos/:id/notas',
+        name: 'ProyectoDetalleNotas',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'notas-proyecto', accion: 'ver' },
+          defaultTab: 'notas',
+        },
+      },
+      {
+        path: 'proyectos/:id/tareas',
+        name: 'ProyectoDetalleTareas',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'tareas', accion: 'ver' },
+          defaultTab: 'tareas',
+        },
+      },
+      {
+        path: 'proyectos/:id/archivos',
+        name: 'ProyectoDetalleArchivos',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'archivos', accion: 'ver' },
+          defaultTab: 'archivos',
+        },
+      },
+      {
+        path: 'proyectos/:id/actividades',
+        name: 'ProyectoDetalleActividades',
+        component: () => import('../modules/proyectos/pages/ProyectosDetallePage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'proyectos', accion: 'ver' },
+          defaultTab: 'actividades',
+        },
+      },
+
       // Perfil de Usuario
       {
         path: 'mi-perfil',
