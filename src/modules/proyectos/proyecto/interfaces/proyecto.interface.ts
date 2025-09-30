@@ -1,5 +1,7 @@
 // src/modules/proyectos/proyecto/interfaces/proyecto.interface.ts
 
+import type { NotaProyectoSimple } from '../../nota-proyecto/interfaces/nota.interface'
+
 // Enum de estados (coincide con el backend)
 export enum EstadoProyecto {
   PLANEADO = 'PLANEADO',
@@ -62,9 +64,11 @@ export interface ProyectoListItem extends Proyecto {
 
 // Interface para el detalle completo (GET /proyectos/:id)
 export interface ProyectoDetalle extends Proyecto {
-  notas: NotaProyecto[]
+  notas: NotaProyectoSimple[]
   actividades: ActividadProyecto[]
   tareas: TareaProyecto[]
+  estaAtrasado: boolean
+  diasRestantes: number | null
 }
 
 // DTOs para operaciones CRUD

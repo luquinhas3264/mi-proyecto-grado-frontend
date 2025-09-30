@@ -54,14 +54,27 @@
                   {{ proyectoDetalle.cliente.razonSocial }}
                 </v-chip>
                 <v-chip
-                  v-if="proyectoDetalle.fechaFin"
-                  :color="obtenerColorTiempo()"
+                  v-if="proyectoDetalle.diasRestantes !== null"
+                  :color="
+                    obtenerColorDiasRestantes(
+                      proyectoDetalle.diasRestantes,
+                      proyectoDetalle.estaAtrasado,
+                    )
+                  "
                   variant="elevated"
                   class="elevation-2"
                 >
-                  <v-icon start :icon="estaAtrasado() ? 'mdi-alert-circle' : 'mdi-clock-outline'" />
-                  {{ formatearTiempoRestante() }}
+                  <v-icon
+                    start
+                    :icon="proyectoDetalle.estaAtrasado ? 'mdi-alert-circle' : 'mdi-clock-outline'"
+                  />
+                  {{
+                    proyectoDetalle.estaAtrasado
+                      ? `${Math.abs(proyectoDetalle.diasRestantes)} atrasado`
+                      : `${proyectoDetalle.diasRestantes} días restantes`
+                  }}
                 </v-chip>
+                <span v-else class="text-caption text-grey-darken-1">Sin fecha fin</span>
               </div>
             </div>
 
@@ -440,8 +453,8 @@ const proyectoParaEditar = computed<ProyectoListItem | null>(() => {
     creadoEn: proyectoDetalle.value.creadoEn,
     // Campos específicos de ProyectoListItem
     notas: proyectoDetalle.value.notas || [],
-    diasRestantes: calcularDiasRestantes(),
-    estaAtrasado: estaAtrasado(),
+    diasRestantes: proyectoDetalle.value.diasRestantes || 0,
+    estaAtrasado: proyectoDetalle.value.estaAtrasado || false,
   }
 })
 
@@ -584,45 +597,6 @@ function calcularProgreso(): number {
   }
 }
 
-function calcularDiasRestantes(): number {
-  if (!proyectoDetalle.value?.fechaFin) return 0
-
-  const hoy = new Date()
-  const fin = new Date(proyectoDetalle.value.fechaFin)
-  const diferencia = fin.getTime() - hoy.getTime()
-  return Math.floor(diferencia / (1000 * 60 * 60 * 24))
-}
-
-function estaAtrasado(): boolean {
-  if (
-    !proyectoDetalle.value?.fechaFin ||
-    proyectoDetalle.value.estado === EstadoProyecto.FINALIZADO
-  ) {
-    return false
-  }
-  return new Date(proyectoDetalle.value.fechaFin) < new Date()
-}
-
-function obtenerColorTiempo(): string {
-  if (estaAtrasado()) return 'error'
-  const dias = calcularDiasRestantes()
-  if (dias <= 3) return 'error'
-  if (dias <= 7) return 'warning'
-  return 'success'
-}
-
-function formatearTiempoRestante(): string {
-  const dias = calcularDiasRestantes()
-
-  if (estaAtrasado()) {
-    return `${Math.abs(dias)} día${Math.abs(dias) === 1 ? '' : 's'} de atraso`
-  }
-
-  if (dias === 0) return 'Vence hoy'
-  if (dias === 1) return '1 día restante'
-  return `${dias} días restantes`
-}
-
 // Event handlers
 function onProyectoActualizado() {
   mostrarDialogoEditar.value = false
@@ -655,6 +629,13 @@ function determinarTabPorRuta() {
   } else {
     tabActivo.value = 'informacion'
   }
+}
+
+function obtenerColorDiasRestantes(dias: number, atrasado: boolean): string {
+  if (atrasado) return 'error'
+  if (dias <= 3) return 'error'
+  if (dias <= 7) return 'warning'
+  return 'success'
 }
 
 // Watchers
