@@ -15,7 +15,6 @@
               density="compact"
               clearable
               hide-details
-              @update:model-value="buscarNotas"
               @click:clear="onClearBusqueda"
             />
           </v-col>
@@ -158,10 +157,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useNotaProyectoStore } from '../../nota-proyecto/store/nota.store'
 import { useAuthStore } from '@/modules/auth/store/auth.store'
-import type {
-  NotaProyecto,
-  NotaProyectoSimple,
-} from '../../nota-proyecto/interfaces/nota.interface'
+import type { NotaProyecto } from '../../nota-proyecto/interfaces/nota.interface'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
 
 // Importar componentes
@@ -171,7 +167,6 @@ import NotaEditDialog from '../../nota-proyecto/components/NotaEditDialog.vue'
 
 interface Props {
   proyectoId: string
-  notas: NotaProyectoSimple[]
 }
 
 const props = defineProps<Props>()
@@ -250,19 +245,6 @@ async function cargarNotas() {
   }
 }
 
-async function buscarNotas() {
-  if (!busqueda.value.trim()) {
-    await cargarNotas()
-    return
-  }
-
-  try {
-    await notaStore.buscarNotas(busqueda.value)
-  } catch (error) {
-    mostrarMensaje('Error al buscar notas', 'error')
-  }
-}
-
 function abrirEdicion(nota: NotaProyecto) {
   notaSeleccionada.value = nota
   mostrarDialogoEditar.value = true
@@ -320,21 +302,6 @@ watch(
   },
 )
 
-watch(
-  () => props.notas,
-  (nuevasNotas) => {
-    // Sincronizar con el store - Convertir NotaProyectoSimple a NotaProyecto
-    if (nuevasNotas && nuevasNotas.length > 0) {
-      const notasCompletas: NotaProyecto[] = nuevasNotas.map((nota) => ({
-        ...nota,
-        idProyecto: props.proyectoId,
-      }))
-      notaStore.notas = notasCompletas
-    }
-  },
-  { immediate: true },
-)
-
 // Lifecycle
 onMounted(() => {
   if (props.proyectoId) {
@@ -345,7 +312,7 @@ onMounted(() => {
 
 <style scoped>
 .notas-proyecto-tab {
-  padding: 5px;
+  padding: 2px;
 }
 
 .stats-card {

@@ -305,7 +305,6 @@
             <v-window-item value="notas">
               <NotasProyectoTab
                 :proyecto-id="proyectoDetalle.idProyecto"
-                :notas="proyectoDetalle.notas || []"
                 @nota-creada="actualizarProyecto"
                 @nota-actualizada="actualizarProyecto"
               />
@@ -313,9 +312,27 @@
 
             <!-- Tab de Tareas -->
             <v-window-item value="tareas">
+              <div class="d-flex align-center mb-4 gap-2">
+                <v-btn
+                  :variant="!mostrarSoloMisTareas ? 'flat' : 'outlined'"
+                  :color="!mostrarSoloMisTareas ? '#485696' : ''"
+                  prepend-icon="mdi-format-list-checks"
+                  @click="mostrarSoloMisTareas = false"
+                >
+                  Todas
+                </v-btn>
+                <v-btn
+                  :variant="mostrarSoloMisTareas ? 'flat' : 'outlined'"
+                  :color="mostrarSoloMisTareas ? '#485696' : ''"
+                  prepend-icon="mdi-account"
+                  @click="mostrarSoloMisTareas = true"
+                >
+                  Mis tareas
+                </v-btn>
+              </div>
               <TareasProyectoTab
                 :proyecto-id="proyectoDetalle.idProyecto"
-                :tareas="proyectoDetalle.tareas || []"
+                :solo-mis-tareas="mostrarSoloMisTareas"
                 @tarea-creada="actualizarProyecto"
                 @tarea-actualizada="actualizarProyecto"
               />
@@ -422,6 +439,7 @@ const proyectoStore = useProyectoStore()
 
 // Estado local
 const tabActivo = ref('informacion')
+const mostrarSoloMisTareas = ref(false)
 const loading = ref(false)
 const mostrarDialogoEditar = ref(false)
 const mostrarConfirmacionEliminacion = ref(false)

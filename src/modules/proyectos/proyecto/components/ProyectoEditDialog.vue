@@ -237,7 +237,22 @@ const rules = {
   ],
   estado: [(v: string) => !!v || 'Debe seleccionar un estado'],
   idCliente: [(v: string) => !!v || 'Debe seleccionar un cliente'],
-  fechaInicio: [(v: string) => !!v || 'La fecha de inicio es obligatoria'],
+  fechaInicio: [
+    (v: string) => !!v || 'La fecha de inicio es obligatoria',
+    (v: string) => {
+      if (!v) return true
+      // Solo validar si el usuario modificó la fecha respecto al valor original
+      if (valoresOriginales.value && v !== valoresOriginales.value.fechaInicio) {
+        const hoy = new Date()
+        const yyyy = hoy.getFullYear()
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0')
+        const dd = String(hoy.getDate()).padStart(2, '0')
+        const hoyStr = `${yyyy}-${mm}-${dd}`
+        return v >= hoyStr || 'La fecha de inicio no puede ser pasada'
+      }
+      return true
+    },
+  ],
   fechaFin: [
     (v: string) => {
       if (!v || !form.value.fechaInicio) return true

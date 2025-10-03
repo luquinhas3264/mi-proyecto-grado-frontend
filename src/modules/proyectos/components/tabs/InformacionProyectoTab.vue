@@ -459,7 +459,7 @@ function llamarCliente() {
 
 <style scoped>
 .informacion-proyecto {
-  padding: 5px;
+  padding: 2px;
 }
 
 .info-item {

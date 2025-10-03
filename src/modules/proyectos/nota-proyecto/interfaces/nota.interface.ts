@@ -1,14 +1,11 @@
 // src/modules/proyectos/nota-proyecto/interfaces/nota.interface.ts
 
 // Interface base de Nota
-export interface NotaProyectoSimple {
+export interface NotaProyecto {
   idNota: string
+  idProyecto: string
   contenido: string
   fecha: string
-}
-
-export interface NotaProyecto extends NotaProyectoSimple {
-  idProyecto: string
 }
 
 // DTO para crear nota

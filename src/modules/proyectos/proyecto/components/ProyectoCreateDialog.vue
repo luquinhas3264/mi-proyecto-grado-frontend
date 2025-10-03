@@ -188,10 +188,13 @@ const rules = {
     (v: string) => !!v || 'La fecha de inicio es obligatoria',
     (v: string) => {
       if (!v) return true
-      const fecha = new Date(v)
+      // Comparar como cadenas YYYY-MM-DD para evitar problemas de zona horaria
       const hoy = new Date()
-      hoy.setHours(0, 0, 0, 0)
-      return fecha >= hoy || 'La fecha de inicio no puede ser anterior a hoy'
+      const yyyy = hoy.getFullYear()
+      const mm = String(hoy.getMonth() + 1).padStart(2, '0')
+      const dd = String(hoy.getDate()).padStart(2, '0')
+      const hoyStr = `${yyyy}-${mm}-${dd}`
+      return v >= hoyStr || 'La fecha de inicio no puede ser anterior a hoy'
     },
   ],
   fechaFin: [
