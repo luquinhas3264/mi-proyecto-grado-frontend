@@ -74,6 +74,7 @@ export interface AsignarResponsableDto {
 
 // Interface para filtros
 export interface FiltrosTarea {
+  idProyecto?: string
   estado?: EstadoTarea
   idUsuarioResponsable?: string
   busqueda?: string

@@ -137,12 +137,12 @@ export const useTareaStore = defineStore('tarea', {
     },
 
     // Cargar mis tareas
-    async cargarMisTareas(filtros?: FiltrosTarea) {
+    async cargarMisTareas(idProyecto?: string, filtros?: FiltrosTarea) {
       this.loading = true
       this.error = null
 
       try {
-        this.misTareas = await TareaService.obtenerMisTareas(filtros)
+        this.misTareas = await TareaService.obtenerMisTareas(idProyecto, filtros)
       } catch (error: any) {
         this.error = error.response?.data?.message || 'Error al cargar mis tareas'
         console.error('Error cargando mis tareas:', error)

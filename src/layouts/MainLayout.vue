@@ -124,33 +124,21 @@
 
         <v-divider class="my-2"></v-divider>
 
-        <!-- Reportes -->
+        <!-- Actividades -->
         <v-list-item
-          v-if="hasPermission('reportes', 'ver')"
-          :class="{ 'v-list-item--active': $route.path.includes('/reportes') }"
-          @click="$router.push('/reportes')"
+          v-if="hasPermission('historial_actividades', 'ver')"
+          :class="{ 'v-list-item--active': $route.path.includes('/actividades') }"
+          @click="$router.push('/actividades')"
           rounded="xl"
           class="ma-2"
         >
           <template v-slot:prepend>
-            <v-icon color="#FF8C00 ">mdi-chart-line</v-icon>
+            <v-icon color="#FF8C00">mdi-history</v-icon>
           </template>
-          <v-list-item-title>Reportes</v-list-item-title>
+          <v-list-item-title>Actividades</v-list-item-title>
         </v-list-item>
 
-        <!-- Configuración -->
-        <v-list-item
-          v-if="hasPermission('configuracion', 'ver')"
-          :class="{ 'v-list-item--active': $route.path.includes('/configuracion') }"
-          @click="$router.push('/configuracion')"
-          rounded="xl"
-          class="ma-2"
-        >
-          <template v-slot:prepend>
-            <v-icon color="#FF8C00 ">mdi-cog</v-icon>
-          </template>
-          <v-list-item-title>Configuración</v-list-item-title>
-        </v-list-item>
+        <v-divider class="my-2"></v-divider>
       </v-list>
     </v-navigation-drawer>
 

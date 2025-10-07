@@ -190,7 +190,10 @@ function formatearDiasRestantes(): string {
 }
 
 function formatearFecha(fecha: string): string {
-  return new Date(fecha).toLocaleDateString('es-ES', {
+  // Sumar un día para corregir desfase UTC-local
+  const date = new Date(fecha)
+  date.setDate(date.getDate() + 1)
+  return date.toLocaleDateString('es-ES', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',

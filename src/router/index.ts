@@ -39,7 +39,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'usuarios/nuevo',
         name: 'CrearUsuario',
-        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'), // Usa el mismo componente con dialog
+        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'),
         meta: {
           requiredPermission: { modulo: 'usuarios', accion: 'crear' },
         },
@@ -47,7 +47,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'usuarios/:id',
         name: 'DetalleUsuario',
-        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'), // Usa el mismo componente con dialog
+        component: () => import('../modules/usuarios-internos/pages/UsuariosListPage.vue'),
         meta: {
           requiredPermission: { modulo: 'usuarios', accion: 'ver' },
         },
@@ -65,7 +65,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'roles/nuevo',
         name: 'CrearRol',
-        component: () => import('../modules/roles/pages/RolesListPage.vue'), // Usa el mismo componente con dialog
+        component: () => import('../modules/roles/pages/RolesListPage.vue'),
         meta: {
           requiredPermission: { modulo: 'roles', accion: 'crear' },
         },
@@ -73,7 +73,7 @@ const routes: Array<RouteRecordRaw> = [
       {
         path: 'roles/:id',
         name: 'DetalleRol',
-        component: () => import('../modules/roles/pages/RolesListPage.vue'), // Usa el mismo componente con dialog
+        component: () => import('../modules/roles/pages/RolesListPage.vue'),
         meta: {
           requiredPermission: { modulo: 'roles', accion: 'ver' },
         },
@@ -121,36 +121,13 @@ const routes: Array<RouteRecordRaw> = [
         },
       },
 
+      // Rutas de Proyectos
       {
         path: 'proyectos',
         name: 'Proyectos',
         component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
         meta: {
           requiredPermission: { modulo: 'proyectos', accion: 'ver' },
-        },
-      },
-      {
-        path: 'proyectos/tareas',
-        name: 'ProyectosTareas',
-        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
-        meta: {
-          requiredPermission: { modulo: 'tareas', accion: 'ver' },
-        },
-      },
-      {
-        path: 'proyectos/notas',
-        name: 'ProyectosNotas',
-        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
-        meta: {
-          requiredPermission: { modulo: 'notas-proyecto', accion: 'ver' },
-        },
-      },
-      {
-        path: 'proyectos/archivos',
-        name: 'ProyectosArchivos',
-        component: () => import('../modules/proyectos/pages/ProyectosMainPage.vue'),
-        meta: {
-          requiredPermission: { modulo: 'archivos', accion: 'ver' },
         },
       },
 
@@ -220,6 +197,8 @@ const routes: Array<RouteRecordRaw> = [
           defaultTab: 'actividades',
         },
       },
+
+      // Rutas de Actividades
 
       // Perfil de Usuario
       {

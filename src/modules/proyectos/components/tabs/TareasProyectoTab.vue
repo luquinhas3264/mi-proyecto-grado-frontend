@@ -467,7 +467,7 @@ function hasPermission(modulo: string, accion: string): boolean {
 async function cargarTareas() {
   try {
     if (props.soloMisTareas) {
-      await tareaStore.cargarMisTareas()
+      await tareaStore.cargarMisTareas(props.proyectoId)
     } else {
       await tareaStore.cargarTareasProyecto(props.proyectoId)
     }
@@ -491,7 +491,7 @@ async function cambiarEstadoTarea(tarea: TareaListItem, nuevoEstado: EstadoTarea
     await tareaStore.cambiarEstado(tarea.idTarea, nuevoEstado)
     // Recargar la lista según el toggle
     if (props.soloMisTareas) {
-      await tareaStore.cargarMisTareas()
+      await tareaStore.cargarMisTareas(props.proyectoId)
     } else {
       await tareaStore.cargarTareasProyecto(props.proyectoId)
     }
@@ -536,7 +536,7 @@ async function onTareaActualizada() {
   tareaSeleccionada.value = null
   // Recargar la lista según el toggle
   if (props.soloMisTareas) {
-    await tareaStore.cargarMisTareas()
+    await tareaStore.cargarMisTareas(props.proyectoId)
   } else {
     await tareaStore.cargarTareasProyecto(props.proyectoId)
   }

@@ -275,7 +275,9 @@
             <v-tab value="archivos">
               <v-icon start>mdi-file-multiple</v-icon>
               Archivos
-              <v-chip size="small" variant="tonal" color="purple" class="ml-2">0</v-chip>
+              <v-chip size="small" variant="tonal" color="purple" class="ml-2">
+                {{ totalArchivosProyecto }}
+              </v-chip>
             </v-tab>
             <v-tab value="actividades">
               <v-icon start>mdi-history</v-icon>
@@ -423,6 +425,7 @@ import {
   type ProyectoListItem,
 } from '../proyecto/interfaces/proyecto.interface'
 import type { Permission } from '@/modules/auth/interfaces/permission.interface'
+import { useArchivoStore } from '../archivos/store/archivo.store'
 
 // Importar componentes de tabs
 import InformacionProyectoTab from '../components/tabs/InformacionProyectoTab.vue'
@@ -436,6 +439,7 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const proyectoStore = useProyectoStore()
+const archivoStore = useArchivoStore()
 
 // Estado local
 const tabActivo = ref('informacion')
@@ -455,6 +459,8 @@ const snackbar = ref({
 const proyectoId = computed(() => route.params.id as string)
 const proyectoDetalle = computed(() => proyectoStore.proyectoActual)
 const error = computed(() => proyectoStore.error)
+
+const totalArchivosProyecto = computed(() => archivoStore.totalArchivos)
 
 const proyectoParaEditar = computed<ProyectoListItem | null>(() => {
   if (!proyectoDetalle.value) return null
@@ -590,29 +596,11 @@ function obtenerIconoEstado(estado: EstadoProyecto): string {
 }
 
 function calcularProgreso(): number {
-  if (!proyectoDetalle.value) return 0
-
-  switch (proyectoDetalle.value.estado) {
-    case EstadoProyecto.PLANEADO:
-      return 0
-    case EstadoProyecto.EN_PROGRESO:
-      if (proyectoDetalle.value.fechaFin) {
-        const inicio = new Date(proyectoDetalle.value.fechaInicio).getTime()
-        const fin = new Date(proyectoDetalle.value.fechaFin).getTime()
-        const ahora = new Date().getTime()
-
-        if (ahora <= inicio) return 0
-        if (ahora >= fin) return 90
-
-        const progreso = ((ahora - inicio) / (fin - inicio)) * 90
-        return Math.round(progreso)
-      }
-      return 50
-    case EstadoProyecto.FINALIZADO:
-      return 100
-    default:
-      return 0
-  }
+  if (!proyectoDetalle.value || !proyectoDetalle.value.tareas) return 0
+  const tareas = proyectoDetalle.value.tareas
+  if (tareas.length === 0) return 0
+  const completadas = tareas.filter((t: any) => t.estado === 'COMPLETADA').length
+  return Math.round((completadas / tareas.length) * 100)
 }
 
 // Event handlers

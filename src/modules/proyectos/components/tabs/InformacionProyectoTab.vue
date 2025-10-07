@@ -246,6 +246,18 @@
 
               <v-list-item>
                 <template v-slot:prepend>
+                  <v-icon color="purple" style="opacity: 1 !important">mdi-file-multiple</v-icon>
+                </template>
+                <v-list-item-title>Archivos</v-list-item-title>
+                <template v-slot:append>
+                  <v-chip size="small" variant="tonal" color="purple">
+                    {{ totalArchivosProyecto }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+
+              <v-list-item>
+                <template v-slot:prepend>
                   <v-icon color="success" style="opacity: 1 !important">mdi-history</v-icon>
                 </template>
                 <v-list-item-title>Actividades</v-list-item-title>
@@ -253,16 +265,6 @@
                   <v-chip size="small" variant="tonal" color="success">
                     {{ proyecto.actividades?.length || 0 }}
                   </v-chip>
-                </template>
-              </v-list-item>
-
-              <v-list-item>
-                <template v-slot:prepend>
-                  <v-icon color="purple" style="opacity: 1 !important">mdi-file-multiple</v-icon>
-                </template>
-                <v-list-item-title>Archivos</v-list-item-title>
-                <template v-slot:append>
-                  <v-chip size="small" variant="tonal" color="purple"> 0 </v-chip>
                 </template>
               </v-list-item>
             </v-list>
@@ -275,12 +277,18 @@
 
 <script setup lang="ts">
 import { EstadoProyecto, type ProyectoDetalle } from '../../proyecto/interfaces/proyecto.interface'
+import { useArchivoStore } from '../../archivos/store/archivo.store'
+import { storeToRefs } from 'pinia'
 
 interface Props {
   proyecto: ProyectoDetalle
 }
 
 const props = defineProps<Props>()
+
+const archivoStore = useArchivoStore()
+const { totalArchivos } = storeToRefs(archivoStore)
+const totalArchivosProyecto = totalArchivos
 
 // Métodos de formato
 function formatearFecha(fecha: string): string {
@@ -390,10 +398,12 @@ function calcularTiempoTranscurrido(): string {
 
 function calcularTiempoRestante(): string {
   if (!props.proyecto.fechaFin) return 'Sin fecha fin'
-
+  // Normalizar ambas fechas a medianoche local (año, mes, día)
   const ahora = new Date()
-  const fin = new Date(props.proyecto.fechaFin)
-  const diferencia = fin.getTime() - ahora.getTime()
+  const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate())
+  const finDate = new Date(props.proyecto.fechaFin)
+  const fin = new Date(finDate.getFullYear(), finDate.getMonth(), finDate.getDate())
+  const diferencia = fin.getTime() - hoy.getTime()
   const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24))
 
   if (dias < 0) return `${Math.abs(dias)} día${Math.abs(dias) === 1 ? '' : 's'} de atraso`
@@ -420,27 +430,10 @@ function obtenerColorTiempoRestante(): string {
 }
 
 function calcularProgreso(): number {
-  switch (props.proyecto.estado) {
-    case EstadoProyecto.PLANEADO:
-      return 0
-    case EstadoProyecto.EN_PROGRESO:
-      if (props.proyecto.fechaFin) {
-        const inicio = new Date(props.proyecto.fechaInicio).getTime()
-        const fin = new Date(props.proyecto.fechaFin).getTime()
-        const ahora = new Date().getTime()
-
-        if (ahora <= inicio) return 0
-        if (ahora >= fin) return 90
-
-        const progreso = ((ahora - inicio) / (fin - inicio)) * 90
-        return Math.round(progreso)
-      }
-      return 50
-    case EstadoProyecto.FINALIZADO:
-      return 100
-    default:
-      return 0
-  }
+  const tareas = props.proyecto.tareas || []
+  if (tareas.length === 0) return 0
+  const completadas = tareas.filter((t) => t.estado === 'COMPLETADA').length
+  return Math.round((completadas / tareas.length) * 100)
 }
 
 // Métodos de contacto

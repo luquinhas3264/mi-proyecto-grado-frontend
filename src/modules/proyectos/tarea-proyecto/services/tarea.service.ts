@@ -60,9 +60,13 @@ export class TareaService {
   }
 
   // Obtener tareas asignadas al usuario actual
-  static async obtenerMisTareas(filtros?: FiltrosTarea): Promise<TareaListItem[]> {
+  static async obtenerMisTareas(
+    idProyecto?: string,
+    filtros?: FiltrosTarea,
+  ): Promise<TareaListItem[]> {
     const params = new URLSearchParams()
 
+    if (idProyecto) params.append('idProyecto', idProyecto)
     if (filtros?.estado) params.append('estado', filtros.estado)
     if (filtros?.busqueda) params.append('busqueda', filtros.busqueda)
     if (filtros?.fechaLimiteDesde) params.append('fechaLimiteDesde', filtros.fechaLimiteDesde)
@@ -114,20 +118,30 @@ export class TareaService {
 
   // Métodos auxiliares para cálculos locales
 
-  // Verificar si una tarea está vencida
+  // Verificar si una tarea está vencida (comparando solo año, mes, día en local)
   static estaVencida(tarea: TareaListItem): boolean {
     if (!tarea.fechaLimite) return false
     if (tarea.estado === 'COMPLETADA') return false
-    return new Date(tarea.fechaLimite) < new Date()
+    const hoy = new Date()
+    const limite = new Date(tarea.fechaLimite)
+    // Normalizar ambas fechas a medianoche local
+    hoy.setHours(0, 0, 0, 0)
+    limite.setHours(0, 0, 0, 0)
+    return limite < hoy
   }
 
-  // Calcular días restantes
+  // Calcular días restantes (comparando solo año, mes, día en local)
   static calcularDiasRestantes(fechaLimite: string | null): number | null {
     if (!fechaLimite) return null
     const hoy = new Date()
     const limite = new Date(fechaLimite)
+    // Sumar un día para corregir desfase UTC-local
+    limite.setDate(limite.getDate() + 1)
+    // Normalizar ambas fechas a medianoche local
+    hoy.setHours(0, 0, 0, 0)
+    limite.setHours(0, 0, 0, 0)
     const diferencia = limite.getTime() - hoy.getTime()
-    return Math.ceil(diferencia / (1000 * 60 * 60 * 24))
+    return Math.floor(diferencia / (1000 * 60 * 60 * 24))
   }
 
   // Ordenar tareas localmente
