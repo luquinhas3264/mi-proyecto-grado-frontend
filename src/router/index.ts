@@ -199,6 +199,14 @@ const routes: Array<RouteRecordRaw> = [
       },
 
       // Rutas de Actividades
+      {
+        path: 'actividades',
+        name: 'Actividades',
+        component: () => import('../modules/actividades/pages/ActividadesListPage.vue'),
+        meta: {
+          requiredPermission: { modulo: 'historial_actividades', accion: 'ver' },
+        },
+      },
 
       // Perfil de Usuario
       {

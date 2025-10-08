@@ -286,6 +286,7 @@ async function onSubmit() {
   try {
     // Solo enviar los campos que han cambiado
     const cambios: UpdateTareaDto = {}
+    let responsableCambiado = false
 
     if (form.value.nombre !== valoresOriginales.value.nombre) {
       cambios.nombre = form.value.nombre
@@ -304,10 +305,35 @@ async function onSubmit() {
     }
 
     if (form.value.idUsuarioResponsable !== valoresOriginales.value.idUsuarioResponsable) {
-      cambios.idUsuarioResponsable = form.value.idUsuarioResponsable || undefined
+      responsableCambiado = true
     }
 
-    await tareaStore.actualizarTarea(props.tarea.idTarea, cambios)
+    // Si solo cambia el responsable
+    if (responsableCambiado && Object.keys(cambios).length === 0) {
+      if (form.value.idUsuarioResponsable) {
+        await tareaStore.asignarResponsable(props.tarea.idTarea, form.value.idUsuarioResponsable)
+      } else {
+        // Si se elimina el responsable, no llamar al endpoint y mostrar mensaje
+        error.value = 'No puedes dejar la tarea sin responsable si previamente asignaste uno.'
+        loading.value = false
+        return
+      }
+    } else {
+      // Si cambian otros campos
+      if (Object.keys(cambios).length > 0) {
+        await tareaStore.actualizarTarea(props.tarea.idTarea, cambios)
+      }
+      // Si también cambió el responsable, actualizarlo después
+      if (responsableCambiado) {
+        if (form.value.idUsuarioResponsable) {
+          await tareaStore.asignarResponsable(props.tarea.idTarea, form.value.idUsuarioResponsable)
+        } else {
+          error.value = 'No puedes dejar la tarea sin responsable si previamente asignaste uno.'
+          loading.value = false
+          return
+        }
+      }
+    }
     emit('tarea-actualizada')
   } catch (err: any) {
     error.value = err.response?.data?.message || 'Error al actualizar la tarea'
